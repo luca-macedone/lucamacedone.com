@@ -8,14 +8,27 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
     ],
-
+    darkMode: 'class',
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['DM Sans', ...defaultTheme.fontFamily.sans],
+                mono: ['DM Mono', ...defaultTheme.fontFamily.mono],
+                serif_display: ['DM Serif Display', ...defaultTheme.fontFamily.serif],
+                serif_text: ['DM Serif Text', ...defaultTheme.fontFamily.serif]
+            },
+            colors: {
+                'text': 'var(--text)',
+                'background-contrast': 'var(--background-contrast)',
+                'background': 'var(--background)',
+                'primary': 'var(--primary)',
+                'secondary': 'var(--secondary)',
+                'accent': 'var(--accent)',
+                'muted': 'var(--muted)'
             },
         },
     },
+
 
     plugins: [forms],
 };

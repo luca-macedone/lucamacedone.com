@@ -1,6 +1,44 @@
-<div>
-    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-        <div class="p-6 text-gray-900">
+<div class="flex items-start justify-center bg-[#2a126e20] dark:bg-[#aa91ed20] min-h-screen py-3.5 px-3.5 lg:px-0">
+    <div class="max-w-[1000px] min-h-full w-full grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-3.5">
+        <div
+            class="bg-background h-full w-full rounded-lg border border-background-contrast p-2.5 flex flex-col gap-2.5">
+            <h2 class="text-xl font-semibold border-b border-background-contrast pb-2">
+                Azioni Rapide
+            </h2>
+            <div class="grid grid-flow-row grid-cols-2 gap-2.5">
+                <a href="{{ route('admin.users') }}"
+                    class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
+                    Gestisci Utenti
+                </a>
+                <a href="{{ route('projects.index') }}"
+                    class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
+                    Gestisci Progetti
+                </a>
+                <a href="{{ route('home') }}"
+                    class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
+                    Visualizza Sito
+                </a>
+            </div>
+        </div>
+        <div
+            class="bg-background h-full w-full rounded-lg border border-background-contrast p-2.5 flex flex-col gap-2.5">
+            <h2 class="text-xl font-semibold border-b border-background-contrast pb-2">
+                Insights
+            </h2>
+            <div class="grid grid-cols-2">
+
+            </div>
+        </div>
+        <div
+            class="bg-background h-full w-full rounded-lg border border-background-contrast p-2.5 col-span-1 lg:col-span-2 flex flex-col gap-2.5">
+            <h2 class="text-xl font-semibold border-b border-background-contrast pb-2">
+                Messaggi ricevuti
+            </h2>
+            <div>
+
+            </div>
+        </div>
+        {{-- <div class=" text-gray-900">
             <h1 class="text-2xl font-bold mb-6">Dashboard Admin</h1>
 
             <!-- Statistics Cards -->
@@ -68,6 +106,6 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
 </div>
