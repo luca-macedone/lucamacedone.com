@@ -18,6 +18,6 @@ class Dashboard extends Component
     {
         return view('livewire.admin.dashboard', [
             'userCount' => $this->userCount
-        ]);
+        ])->layout('layouts.app');
     }
 }

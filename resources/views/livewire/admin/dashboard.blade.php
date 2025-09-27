@@ -10,7 +10,7 @@
                     class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
                     Gestisci Utenti
                 </a>
-                <a href="{{ route('projects.index') }}"
+                <a href="{{ route('admin.projects.index') }}"
                     class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
                     Gestisci Progetti
                 </a>

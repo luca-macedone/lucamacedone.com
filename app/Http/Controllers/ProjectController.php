@@ -3,202 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use App\Models\ProjectCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
     /**
-     * Lista progetti con filtri e paginazione
-     */
-    public function index(Request $request)
-    {
-        $query = Project::with(['categories', 'technologies'])
-            ->orderBy('created_at', 'desc');
-
-        // Filtri
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('category')) {
-            $query->whereHas('categories', function ($q) use ($request) {
-                $q->where('project_categories.id', $request->category);
-            });
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('client', 'like', "%{$search}%");
-            });
-        }
-
-        $projects = $query->paginate(15)->withQueryString();
-
-        // Dati per filtri
-        $categories = ProjectCategory::ordered()->get();
-        $stats = [
-            'total' => Project::count(),
-            'published' => Project::where('status', 'published')->count(),
-            'draft' => Project::where('status', 'draft')->count(),
-            'featured' => Project::where('is_featured', true)->count(),
-        ];
-
-        return view('livewire.admin.projects.index', compact('projects', 'categories', 'stats'));
-    }
-
-    /**
-     * Form creazione nuovo progetto
-     */
-    public function create()
-    {
-        return view('livewire.admin.projects.create');
-    }
-
-    /**
-     * Form modifica progetto esistente
-     */
-    public function edit(Project $project)
-    {
-        return view('livewire.admin.projects.edit', compact('project'));
-    }
-
-    /**
-     * Elimina progetto
-     */
-    public function destroy(Project $project)
-    {
-        try {
-            // Elimina immagini associate
-            if ($project->featured_image) {
-                Storage::disk('public')->delete($project->featured_image);
-            }
-
-            if ($project->gallery) {
-                foreach ($project->gallery as $image) {
-                    Storage::disk('public')->delete($image);
-                }
-            }
-
-            // Elimina relazioni
-            $project->categories()->detach();
-            $project->technologies()->detach();
-            $project->images()->delete();
-            $project->seo()->delete();
-
-            // Elimina progetto
-            $project->delete();
-
-            return redirect()->route('admin.projects.index')
-                ->with('success', 'Progetto eliminato con successo');
-        } catch (\Exception $e) {
-            return redirect()->route('admin.projects.index')
-                ->with('error', 'Errore nell\'eliminare il progetto: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Eliminazione multipla progetti
-     */
-    public function bulkDelete(Request $request)
-    {
-        $projectIds = $request->input('project_ids', []);
-
-        if (empty($projectIds)) {
-            return response()->json(['error' => 'Nessun progetto selezionato'], 400);
-        }
-
-        try {
-            $projects = Project::whereIn('id', $projectIds)->get();
-
-            foreach ($projects as $project) {
-                // Pulisci immagini
-                if ($project->featured_image) {
-                    Storage::disk('public')->delete($project->featured_image);
-                }
-
-                if ($project->gallery) {
-                    foreach ($project->gallery as $image) {
-                        Storage::disk('public')->delete($image);
-                    }
-                }
-
-                // Elimina relazioni
-                $project->categories()->detach();
-                $project->technologies()->detach();
-                $project->images()->delete();
-                $project->seo()->delete();
-            }
-
-            Project::whereIn('id', $projectIds)->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => count($projectIds) . ' progetti eliminati con successo'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Errore nell\'eliminazione: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Pubblicazione multipla progetti
-     */
-    public function bulkPublish(Request $request)
-    {
-        $projectIds = $request->input('project_ids', []);
-        $status = $request->input('status', 'published');
-
-        if (empty($projectIds)) {
-            return response()->json(['error' => 'Nessun progetto selezionato'], 400);
-        }
-
-        try {
-            Project::whereIn('id', $projectIds)->update(['status' => $status]);
-
-            return response()->json([
-                'success' => true,
-                'message' => count($projectIds) . " progetti aggiornati a '{$status}'"
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Errore nell\'aggiornamento: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Evidenzia progetti
-     */
-    public function bulkFeature(Request $request)
-    {
-        $projectIds = $request->input('project_ids', []);
-        $featured = $request->input('featured', true);
-
-        if (empty($projectIds)) {
-            return response()->json(['error' => 'Nessun progetto selezionato'], 400);
-        }
-
-        try {
-            Project::whereIn('id', $projectIds)->update(['is_featured' => $featured]);
-
-            $message = $featured
-                ? count($projectIds) . ' progetti messi in evidenza'
-                : count($projectIds) . ' progetti rimossi dall\'evidenza';
-
-            return response()->json([
-                'success' => true,
-                'message' => $message
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Errore nell\'aggiornamento: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Toggle status progetto (AJAX)
+     * Toggle project status (AJAX)
      */
     public function toggleStatus(Project $project)
     {
@@ -208,89 +19,231 @@ class ProjectController extends Controller
 
             return response()->json([
                 'success' => true,
-                'status' => $newStatus,
-                'message' => "Progetto {$newStatus}"
+                'message' => "Status aggiornato a: {$newStatus}",
+                'new_status' => $newStatus
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore nell\'aggiornamento dello status: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
-     * Toggle featured progetto (AJAX)
+     * Toggle project featured status (AJAX)
      */
     public function toggleFeatured(Project $project)
     {
         try {
             $project->update(['is_featured' => !$project->is_featured]);
 
+            $message = $project->is_featured ? 'Progetto messo in evidenza' : 'Progetto rimosso dall\'evidenza';
+
             return response()->json([
                 'success' => true,
-                'is_featured' => $project->is_featured,
-                'message' => $project->is_featured ? 'Progetto messo in evidenza' : 'Progetto rimosso dall\'evidenza'
+                'message' => $message,
+                'is_featured' => $project->is_featured
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore nell\'aggiornamento: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
-     * Riordina progetti (drag & drop)
+     * Delete project (AJAX)
      */
-    public function reorder(Request $request)
+    public function destroy(Project $project)
     {
-        $projectIds = $request->input('project_ids', []);
+        try {
+            // Elimina file associati
+            if ($project->featured_image) {
+                Storage::disk('public')->delete($project->featured_image);
+            }
+
+            if ($project->gallery_images) {
+                foreach ($project->gallery_images as $image) {
+                    Storage::disk('public')->delete($image);
+                }
+            }
+
+            $project->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Progetto eliminato con successo'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore nell\'eliminazione: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk delete projects
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'project_ids' => 'required|array',
+            'project_ids.*' => 'exists:projects,id'
+        ]);
 
         try {
-            foreach ($projectIds as $index => $projectId) {
-                Project::where('id', $projectId)->update(['sort_order' => $index]);
+            $projects = Project::whereIn('id', $request->project_ids)->get();
+            $count = 0;
+
+            foreach ($projects as $project) {
+                // Elimina file associati
+                if ($project->featured_image) {
+                    Storage::disk('public')->delete($project->featured_image);
+                }
+
+                if ($project->gallery_images) {
+                    foreach ($project->gallery_images as $image) {
+                        Storage::disk('public')->delete($image);
+                    }
+                }
+
+                $project->delete();
+                $count++;
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Ordine progetti aggiornato'
+                'message' => "Eliminati {$count} progetti con successo"
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore nell\'eliminazione multipla: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
-     * Search progetti per autocomplete (AJAX)
+     * Bulk publish/unpublish projects
      */
-    public function searchProjects(Request $request)
+    public function bulkPublish(Request $request)
     {
-        $query = $request->get('q', '');
+        $request->validate([
+            'project_ids' => 'required|array',
+            'project_ids.*' => 'exists:projects,id',
+            'status' => 'required|in:draft,published'
+        ]);
 
-        if (strlen($query) < 2) {
-            return response()->json([]);
+        try {
+            $updated = Project::whereIn('id', $request->project_ids)
+                ->update(['status' => $request->status]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Aggiornati {$updated} progetti a status: {$request->status}"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore nell\'aggiornamento: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk feature/unfeature projects
+     */
+    public function bulkFeature(Request $request)
+    {
+        $request->validate([
+            'project_ids' => 'required|array',
+            'project_ids.*' => 'exists:projects,id',
+            'featured' => 'required|boolean'
+        ]);
+
+        try {
+            $updated = Project::whereIn('id', $request->project_ids)
+                ->update(['is_featured' => $request->featured]);
+
+            $action = $request->featured ? 'messi in evidenza' : 'rimossi dall\'evidenza';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Aggiornati {$updated} progetti: {$action}"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore nell\'aggiornamento: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reorder projects
+     */
+    public function reorder(Request $request)
+    {
+        $request->validate([
+            'projects' => 'required|array',
+            'projects.*.id' => 'required|exists:projects,id',
+            'projects.*.sort_order' => 'required|integer|min:0'
+        ]);
+
+        try {
+            foreach ($request->projects as $projectData) {
+                Project::where('id', $projectData['id'])
+                    ->update(['sort_order' => $projectData['sort_order']]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Ordine progetti aggiornato con successo'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore nel riordinamento: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get projects for mobile/external use
+     */
+    public function apiIndex(Request $request)
+    {
+        $query = Project::with(['categories', 'technologies'])
+            ->where('status', 'published');
+
+        if ($request->has('featured')) {
+            $query->where('is_featured', true);
         }
 
-        $projects = Project::where('title', 'like', "%{$query}%")
-            ->orWhere('client', 'like', "%{$query}%")
-            ->limit(10)
-            ->get(['id', 'title', 'client', 'status'])
-            ->map(function ($project) {
-                return [
-                    'id' => $project->id,
-                    'text' => $project->title . ($project->client ? " ({$project->client})" : ''),
-                    'status' => $project->status
-                ];
+        if ($request->has('category')) {
+            $query->whereHas('categories', function ($q) use ($request) {
+                $q->where('slug', $request->category);
             });
+        }
+
+        $projects = $query->orderBy('sort_order', 'asc')
+            ->paginate($request->get('per_page', 12));
 
         return response()->json($projects);
     }
 
     /**
-     * Progetti recenti per dashboard
+     * API: Get single project
      */
-    public function recentProjects()
+    public function apiShow(Project $project)
     {
-        $projects = Project::with(['categories'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get(['id', 'title', 'status', 'is_featured', 'created_at', 'featured_image']);
+        if ($project->status !== 'published') {
+            return response()->json(['message' => 'Project not found'], 404);
+        }
 
-        return response()->json($projects);
+        return response()->json($project->load(['categories', 'technologies']));
     }
 }
