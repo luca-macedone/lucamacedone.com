@@ -19,15 +19,52 @@ class UserManager extends Component
                 ->orWhere('email', 'like', '%' . $this->search . '%');
         })->paginate(10);
 
-        return view('livewire.admin.user-manager', compact('users'));
+        $adminCount = User::where('is_admin', true)->count();
+
+        return view('livewire.admin.user-manager', compact('users', 'adminCount'))
+            ->layout('layouts.app');
     }
 
     public function toggleAdmin($userId)
     {
         $user = User::find($userId);
+
+        if ($user->is_admin) {
+            $adminCount = User::where('is_admin', true)->count();
+
+            if ($adminCount <= 1) {
+                session()->flash('error', 'Non puoi rimuovere l\'ultimo amministratore!');
+                return;
+            }
+        }
+
         $user->is_admin = !$user->is_admin;
         $user->save();
 
-        session()->flash('message', 'Stato admin aggiornato!');
+        session()->flash('message', 'Stato admin aggiornato con successo!');
+    }
+
+    public function deleteUser($userId)
+    {
+        $user = User::find($userId);
+
+        // Non permettere di eliminare l'ultimo admin
+        if ($user->is_admin) {
+            $adminCount = User::where('is_admin', true)->count();
+
+            if ($adminCount <= 1) {
+                session()->flash('error', 'Non puoi eliminare l\'ultimo amministratore!');
+                return;
+            }
+        }
+
+        // Non permettere di eliminare se stesso
+        if ($user->id === auth()->id()) {
+            session()->flash('error', 'Non puoi eliminare il tuo account!');
+            return;
+        }
+
+        $user->delete();
+        session()->flash('message', 'Utente eliminato con successo!');
     }
 }

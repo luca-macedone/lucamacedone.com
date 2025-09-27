@@ -2,6 +2,16 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
+    <script>
+        // Previeni il flash del tema sbagliato
+        (function() {
+            const savedTheme = localStorage.getItem('theme-preference');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -26,7 +36,7 @@
 </head>
 
 <body
-    class="font-sans antialiased bg-background dark:bg-background text-text dark:text-text {{ session()->has('theme') === 'dark' ? 'dark' : '' }}">
+    class="font-sans antialiased bg-background dark:bg-background text-text dark:text-text {{ session()->has('theme') && session('theme') === 'dark' ? 'dark' : '' }}">
     <div class="relative">
         <x-guest-navbar />
 
@@ -46,29 +56,44 @@
         function applyTheme(isDark) {
             const body = document.body;
 
-            body.classList.toggle('dark');
+            if (isDark) {
+                body.classList.add('dark');
+            } else {
+                body.classList.remove('dark');
+            }
         }
 
         // Ascolta gli eventi Livewire per il cambio tema
         document.addEventListener('livewire:init', () => {
             Livewire.on('theme-changed', (event) => {
-                applyTheme(event.isDark);
+                // Determina se il tema è scuro dal parametro 'theme'
+                const isDark = event.theme === 'dark';
+                applyTheme(isDark);
 
-                // Opzionale: salva anche in localStorage per persistenza
-                if (!event.isDark) {
+                // Salva la preferenza nel localStorage
+                if (isDark) {
                     localStorage.setItem('theme-preference', 'dark');
                 } else {
-                    localStorage.removeItem('theme-preference');
+                    localStorage.setItem('theme-preference', 'light');
                 }
             });
         });
 
-        // Al caricamento della pagina, controlla se c'è una preferenza salvata
+        // Al caricamento della pagina, controlla le preferenze
         document.addEventListener('DOMContentLoaded', function() {
             const savedTheme = localStorage.getItem('theme-preference');
             const sessionDark = {{ session()->has('theme') && session('theme') === 'dark' ? 'true' : 'false' }};
 
-            applyTheme(savedTheme === 'dark' || sessionDark);
+            // Priorità: localStorage > sessione
+            const isDark = savedTheme === 'dark' || (savedTheme === null && sessionDark);
+
+            applyTheme(isDark);
+
+            // Sincronizza con la sessione se necessario
+            if (savedTheme && ((savedTheme === 'dark') !== sessionDark)) {
+                // Potrebbe essere necessario aggiornare la sessione
+                // tramite una chiamata Livewire
+            }
         });
     </script>
 </body>

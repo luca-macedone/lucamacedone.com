@@ -10,16 +10,19 @@ class ThemeSwitcher extends Component
 
     public function mount()
     {
+        // Controlla prima il localStorage tramite JavaScript, poi la sessione
         $this->isDark = session('theme', 'light') === 'dark';
     }
 
     public function toggleTheme()
     {
         $this->isDark = !$this->isDark;
+        $theme = $this->isDark ? 'dark' : 'light';
 
-        session(['theme' => $this->isDark ? 'dark' : 'light']);
+        session(['theme' => $theme]);
 
-        $this->dispatch('theme-changed', theme: $this->isDark ? 'dark' : 'light');
+        // Invia l'evento con il tema esplicito
+        $this->dispatch('theme-changed', theme: $theme);
     }
 
     public function render()

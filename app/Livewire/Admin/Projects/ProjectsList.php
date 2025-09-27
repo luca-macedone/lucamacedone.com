@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\ProjectCategory;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectsList extends Component
 {
@@ -18,11 +19,14 @@ class ProjectsList extends Component
     public $sortDirection = 'desc';
     public $perPage = 15;
     public $selectedProjects = [];
+    public $selectAll = false;
 
     protected $queryString = [
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
         'categoryFilter' => ['except' => ''],
+        'sortBy' => ['except' => 'created_at'],
+        'sortDirection' => ['except' => 'desc'],
     ];
 
     protected $listeners = [
@@ -36,10 +40,27 @@ class ProjectsList extends Component
         $this->selectedProjects = [];
     }
 
-    public function updating($propertyName)
+    public function updatedSearch()
     {
-        if (in_array($propertyName, ['search', 'statusFilter', 'categoryFilter'])) {
-            $this->resetPage();
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedCategoryFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $this->selectedProjects = $this->getProjects()->pluck('id')->toArray();
+        } else {
+            $this->selectedProjects = [];
         }
     }
 
@@ -53,25 +74,41 @@ class ProjectsList extends Component
         $this->sortBy = $field;
     }
 
-    public function toggleProjectSelection($projectId)
+    /**
+     * Toggle status del progetto
+     */
+    public function toggleStatus($projectId)
     {
-        if (in_array($projectId, $this->selectedProjects)) {
-            $this->selectedProjects = array_diff($this->selectedProjects, [$projectId]);
-        } else {
-            $this->selectedProjects[] = $projectId;
+        try {
+            $project = Project::findOrFail($projectId);
+            $newStatus = $project->status === 'published' ? 'draft' : 'published';
+            $project->update(['status' => $newStatus]);
+
+            session()->flash('message', "Status progetto aggiornato a: {$newStatus}");
+        } catch (\Exception $e) {
+            session()->flash('error', 'Errore nell\'aggiornare lo status: ' . $e->getMessage());
         }
     }
 
-    public function selectAllProjects()
+    /**
+     * Toggle featured del progetto
+     */
+    public function toggleFeatured($projectId)
     {
-        $this->selectedProjects = $this->getProjects()->pluck('id')->toArray();
+        try {
+            $project = Project::findOrFail($projectId);
+            $project->update(['is_featured' => !$project->is_featured]);
+
+            $message = $project->is_featured ? 'Progetto messo in evidenza' : 'Progetto rimosso dall\'evidenza';
+            session()->flash('message', $message);
+        } catch (\Exception $e) {
+            session()->flash('error', 'Errore nell\'aggiornare l\'evidenza: ' . $e->getMessage());
+        }
     }
 
-    public function clearSelection()
-    {
-        $this->selectedProjects = [];
-    }
-
+    /**
+     * Elimina un singolo progetto
+     */
     public function deleteProject($projectId)
     {
         try {
@@ -79,29 +116,36 @@ class ProjectsList extends Component
 
             // Elimina file associati
             if ($project->featured_image) {
-                \Storage::disk('public')->delete($project->featured_image);
+                Storage::disk('public')->delete($project->featured_image);
             }
+
             if ($project->gallery_images) {
-                foreach ($project->gallery_images as $image) {
-                    \Storage::disk('public')->delete($image);
+                $galleryImages = is_string($project->gallery_images)
+                    ? json_decode($project->gallery_images, true)
+                    : $project->gallery_images;
+
+                if (is_array($galleryImages)) {
+                    foreach ($galleryImages as $image) {
+                        Storage::disk('public')->delete($image);
+                    }
                 }
             }
 
             $project->delete();
 
-            $this->dispatch('project-deleted', [
-                'message' => 'Progetto eliminato con successo'
-            ]);
+            session()->flash('message', 'Progetto eliminato con successo');
         } catch (\Exception $e) {
-            $this->dispatch('project-error', [
-                'message' => 'Errore nell\'eliminazione: ' . $e->getMessage()
-            ]);
+            session()->flash('error', 'Errore nell\'eliminazione: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Bulk delete - Elimina progetti selezionati
+     */
     public function bulkDelete()
     {
         if (empty($this->selectedProjects)) {
+            session()->flash('error', 'Nessun progetto selezionato');
             return;
         }
 
@@ -109,42 +153,101 @@ class ProjectsList extends Component
             $projects = Project::whereIn('id', $this->selectedProjects)->get();
 
             foreach ($projects as $project) {
-                // Elimina file
+                // Elimina file associati
                 if ($project->featured_image) {
-                    \Storage::disk('public')->delete($project->featured_image);
+                    Storage::disk('public')->delete($project->featured_image);
                 }
+
                 if ($project->gallery_images) {
-                    foreach ($project->gallery_images as $image) {
-                        \Storage::disk('public')->delete($image);
+                    $galleryImages = is_string($project->gallery_images)
+                        ? json_decode($project->gallery_images, true)
+                        : $project->gallery_images;
+
+                    if (is_array($galleryImages)) {
+                        foreach ($galleryImages as $image) {
+                            Storage::disk('public')->delete($image);
+                        }
                     }
                 }
+
                 $project->delete();
             }
 
             $count = count($this->selectedProjects);
             $this->selectedProjects = [];
+            $this->selectAll = false;
 
-            $this->dispatch('projects-bulk-deleted', [
-                'message' => "Eliminati {$count} progetti con successo"
-            ]);
+            session()->flash('message', "Eliminati {$count} progetti con successo");
         } catch (\Exception $e) {
-            $this->dispatch('project-error', [
-                'message' => 'Errore nell\'eliminazione multipla: ' . $e->getMessage()
-            ]);
+            session()->flash('error', 'Errore nell\'eliminazione multipla: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Bulk publish - Pubblica progetti selezionati
+     */
+    public function bulkPublish()
+    {
+        if (empty($this->selectedProjects)) {
+            session()->flash('error', 'Nessun progetto selezionato');
+            return;
+        }
+
+        try {
+            Project::whereIn('id', $this->selectedProjects)
+                ->update(['status' => 'published']);
+
+            $count = count($this->selectedProjects);
+            $this->selectedProjects = [];
+            $this->selectAll = false;
+
+            session()->flash('message', "{$count} progetti pubblicati con successo");
+        } catch (\Exception $e) {
+            session()->flash('error', 'Errore nella pubblicazione: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Bulk feature - Metti in evidenza progetti selezionati
+     */
+    public function bulkFeature()
+    {
+        if (empty($this->selectedProjects)) {
+            session()->flash('error', 'Nessun progetto selezionato');
+            return;
+        }
+
+        try {
+            Project::whereIn('id', $this->selectedProjects)
+                ->update(['is_featured' => true]);
+
+            $count = count($this->selectedProjects);
+            $this->selectedProjects = [];
+            $this->selectAll = false;
+
+            session()->flash('message', "{$count} progetti messi in evidenza");
+        } catch (\Exception $e) {
+            session()->flash('error', 'Errore nell\'evidenziazione: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Refresh della lista progetti
+     */
     public function refreshProjects()
     {
         // Forza il refresh della pagina corrente
         $this->resetPage();
     }
 
-    public function getProjects()
+    /**
+     * Ottieni i progetti filtrati e paginati
+     */
+    private function getProjects()
     {
         $query = Project::with(['categories', 'technologies']);
 
-        // Filtri
+        // Applica filtri
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('title', 'like', '%' . $this->search . '%')
@@ -163,13 +266,16 @@ class ProjectsList extends Component
             });
         }
 
-        // Ordinamento
+        // Applica ordinamento
         $query->orderBy($this->sortBy, $this->sortDirection);
 
         return $query->paginate($this->perPage);
     }
 
-    public function getStats()
+    /**
+     * Ottieni statistiche progetti
+     */
+    private function getStats()
     {
         return [
             'total' => Project::count(),
@@ -179,11 +285,14 @@ class ProjectsList extends Component
         ];
     }
 
+    /**
+     * Render del componente
+     */
     public function render()
     {
         return view('livewire.admin.projects.index', [
             'projects' => $this->getProjects(),
-            'categories' => ProjectCategory::ordered()->get(),
+            'categories' => ProjectCategory::orderBy('name')->get(),
             'stats' => $this->getStats(),
         ])->layout('layouts.app');
     }

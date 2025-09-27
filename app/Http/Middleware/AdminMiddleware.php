@@ -10,8 +10,12 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || !auth()->user()->is_admin) {
-            return redirect('/')->with('error', 'Access forbidden.');
+        if (!auth()->check()) {
+            return redirect('/login')->with('error', 'Accesso richiesto.');
+        }
+
+        if (!auth()->user()->is_admin) {
+            return redirect('/')->with('error', 'Accesso non autorizzato.');
         }
 
         return $next($request);

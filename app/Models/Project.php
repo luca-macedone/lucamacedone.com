@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
 class Project extends Model
 {
@@ -18,7 +19,7 @@ class Project extends Model
         'description',
         'content',
         'featured_image',
-        'gallery',
+        'gallery_images',  // Cambiato da 'gallery' a 'gallery_images'
         'technologies',
         'client',
         'project_url',
@@ -27,11 +28,14 @@ class Project extends Model
         'end_date',
         'status',
         'sort_order',
-        'is_featured'
+        'is_featured',
+        'meta_title',       // Aggiunto
+        'meta_description', // Aggiunto
+        'meta_keywords'     // Aggiunto
     ];
 
     protected $casts = [
-        'gallery' => 'array',
+        'gallery_images' => 'array',  // Cast automatico ad array
         'technologies' => 'array',
         'start_date' => 'date',
         'end_date' => 'date',
@@ -46,12 +50,31 @@ class Project extends Model
         static::creating(function ($project) {
             if (empty($project->slug)) {
                 $project->slug = Str::slug($project->title);
+
+                // Assicurati che lo slug sia unico
+                $originalSlug = $project->slug;
+                $counter = 1;
+                while (static::where('slug', $project->slug)->exists()) {
+                    $project->slug = $originalSlug . '-' . $counter;
+                    $counter++;
+                }
             }
         });
 
         static::updating(function ($project) {
-            if ($project->isDirty('title') && empty($project->slug)) {
+            if ($project->isDirty('title')) {
                 $project->slug = Str::slug($project->title);
+
+                // Assicurati che lo slug sia unico (escludendo il record corrente)
+                $originalSlug = $project->slug;
+                $counter = 1;
+                while (static::where('slug', $project->slug)
+                    ->where('id', '!=', $project->id)
+                    ->exists()
+                ) {
+                    $project->slug = $originalSlug . '-' . $counter;
+                    $counter++;
+                }
             }
         });
     }
@@ -99,9 +122,53 @@ class Project extends Model
         return $this->featured_image ? asset('storage/' . $this->featured_image) : null;
     }
 
-    public function getExcerptAttribute($length = 150)
+    public function getGalleryImagesUrlsAttribute()
     {
-        return Str::limit(strip_tags($this->description), $length);
+        $galleryImages = $this->gallery_images;
+
+        if (!$galleryImages) {
+            return [];
+        }
+
+        // Se è una stringa JSON, decodificala
+        if (is_string($galleryImages)) {
+            $galleryImages = json_decode($galleryImages, true) ?? [];
+        }
+
+        // Assicurati che sia un array
+        if (!is_array($galleryImages)) {
+            return [];
+        }
+
+        return collect($galleryImages)->map(function ($image) {
+            return asset('storage/' . $image);
+        })->toArray();
+    }
+
+    public function getExcerptAttribute()
+    {
+        return Str::limit(strip_tags($this->description), 150);
+    }
+
+    // Mutators
+    public function setMetaKeywordsAttribute($value)
+    {
+        // Se è una stringa, mantienila come stringa
+        // Se è un array, convertilo in stringa separata da virgole
+        if (is_array($value)) {
+            $this->attributes['meta_keywords'] = implode(',', $value);
+        } else {
+            $this->attributes['meta_keywords'] = $value;
+        }
+    }
+
+    public function getMetaKeywordsArrayAttribute()
+    {
+        // Restituisce meta_keywords come array
+        if ($this->meta_keywords) {
+            return explode(',', $this->meta_keywords);
+        }
+        return [];
     }
 
     // Route model binding per slug

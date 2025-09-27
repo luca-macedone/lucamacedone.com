@@ -74,7 +74,7 @@ class ProjectCreate extends Component
     public function mount()
     {
         // Imposta valori default
-        $this->sort_order = Project::max('sort_order') + 1;
+        $this->sort_order = Project::max('sort_order') + 1 ?? 0;
     }
 
     public function updatedTitle()
@@ -99,6 +99,8 @@ class ProjectCreate extends Component
 
         try {
             $project = new Project();
+
+            // Dati base
             $project->title = $this->title;
             $project->slug = $this->generateUniqueSlug($this->title);
             $project->description = $this->description;
@@ -106,13 +108,15 @@ class ProjectCreate extends Component
             $project->client = $this->client;
             $project->project_url = $this->project_url;
             $project->github_url = $this->github_url;
-            $project->start_date = $this->start_date;
-            $project->end_date = $this->end_date;
+            $project->start_date = $this->start_date ?: null;
+            $project->end_date = $this->end_date ?: null;
             $project->status = $this->status;
             $project->is_featured = $this->is_featured;
             $project->sort_order = $this->sort_order;
-            $project->meta_title = $this->meta_title;
-            $project->meta_description = $this->meta_description;
+
+            // SEO
+            $project->meta_title = $this->meta_title ?: Str::limit($this->title, 60);
+            $project->meta_description = $this->meta_description ?: Str::limit($this->description, 160);
             $project->meta_keywords = $this->meta_keywords;
 
             // Upload featured image
@@ -126,7 +130,7 @@ class ProjectCreate extends Component
                 foreach ($this->gallery_images as $image) {
                     $galleryPaths[] = $image->store('projects/gallery', 'public');
                 }
-                $project->gallery_images = $galleryPaths;
+                $project->gallery_images = json_encode($galleryPaths);
             }
 
             $project->save();
@@ -140,19 +144,12 @@ class ProjectCreate extends Component
                 $project->technologies()->sync($this->selected_technologies);
             }
 
-            $this->dispatch('project-created', [
-                'message' => 'Progetto creato con successo!',
-                'project_id' => $project->id
-            ]);
+            session()->flash('message', 'Progetto creato con successo!');
 
-            // Reset form dopo salvataggio
-            $this->reset();
-
+            // Redirect alla lista progetti
             return redirect()->route('admin.projects.index');
         } catch (\Exception $e) {
-            $this->dispatch('project-error', [
-                'message' => 'Errore nel salvataggio: ' . $e->getMessage()
-            ]);
+            session()->flash('error', 'Errore nel salvataggio: ' . $e->getMessage());
         }
     }
 
@@ -191,8 +188,8 @@ class ProjectCreate extends Component
     public function render()
     {
         return view('livewire.admin.projects.create', [
-            'categories' => ProjectCategory::all(),
-            'technologies' => ProjectTechnology::all(),
+            'categories' => ProjectCategory::orderBy('name')->get(),
+            'technologies' => ProjectTechnology::orderBy('category')->orderBy('name')->get(),
         ])->layout('layouts.app');
     }
 }
