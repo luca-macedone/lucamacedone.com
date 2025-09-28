@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import './components/btn.css';
-
 @layer base {
     :root {
         --text: #06030c;

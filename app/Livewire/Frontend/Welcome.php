@@ -3,10 +3,39 @@
 namespace App\Livewire\Frontend;
 
 use App\Models\Project;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Welcome extends Component
 {
+    // Metodo 1: Usa l'attributo #[On] (preferito in Livewire 3)
+    #[On('open-projects-portfolio')]
+    public function openProjectsPortfolio($data = null)
+    {
+        \Log::info('Event received', ['data' => $data]);
+
+        // Gestisci i diversi formati di parametri
+        if (is_array($data) && isset($data['route'])) {
+            return $this->redirect(route($data['route']), navigate: true);
+        }
+
+        if (is_string($data)) {
+            return $this->redirect(route($data), navigate: true);
+        }
+
+        // Default
+        return $this->redirect(route('portfolio.index'), navigate: true);
+    }
+
+    // OPPURE Metodo 2: Usa getListeners() 
+    protected function getListeners()
+    {
+        return [
+            'open-projects-portfolio' => 'openProjectsPortfolio',
+        ];
+    }
+
+    // Altri metodi del componente...
     public function getFeaturedProjects()
     {
         return Project::with(['categories', 'technologies'])
@@ -17,22 +46,10 @@ class Welcome extends Component
             ->get();
     }
 
-    public function getLatestProjects()
-    {
-        return Project::with(['categories', 'technologies'])
-            ->where('status', 'published')
-            ->orderBy('created_at', 'desc')
-            ->limit(4)
-            ->get();
-    }
-
     public function getProjectsForHomepage()
     {
-        // Prima prendi i progetti in evidenza
         $featured = $this->getFeaturedProjects();
 
-        // Se non ci sono abbastanza progetti in evidenza, 
-        // completa con gli ultimi progetti
         if ($featured->count() < 4) {
             $latest = Project::with(['categories', 'technologies'])
                 ->where('status', 'published')
@@ -51,7 +68,7 @@ class Welcome extends Component
     {
         return [
             'total_projects' => Project::where('status', 'published')->count(),
-            'years_experience' => now()->year - 2018, // Calcola automaticamente
+            'years_experience' => now()->year - 2018,
             'technologies_used' => \App\Models\ProjectTechnology::count(),
             'clients_served' => Project::whereNotNull('client')
                 ->where('status', 'published')

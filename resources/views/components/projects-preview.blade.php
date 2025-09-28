@@ -119,13 +119,14 @@
         @endif
 
         {{-- Pulsante per vedere tutti i progetti --}}
-        <livewire:frontend.button :action="'open-projects-portfolio'" :label="'Vedi tutti i progetti'" :btn-type="'accent'" :parameters="['route' => 'portfolio.index']" />
-        <a href="{{ route('portfolio.index') }}"
+        <livewire:frontend.button :action="'open-projects-portfolio'" action_type="'route'" :label="'Vedi Tutti i Progetti'" :btn_type="'bg-accent text-background-contrast text-lg'"
+            :parameters="['route' => 'portfolio.index']" />
+        {{-- <a href="{{ route('portfolio.index') }}"
             class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200">
             Vedi Tutti i Progetti
             <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
-        </a>
+        </a> --}}
     </section>
 </div>
