@@ -4,6 +4,7 @@ namespace App\Livewire\Frontend;
 
 use App\Models\Project;
 use Livewire\Component;
+use Illuminate\Support\Str;
 
 class ProjectShow extends Component
 {
@@ -128,12 +129,16 @@ class ProjectShow extends Component
 
     public function render()
     {
+        $metaTitle = $this->project->meta_title ?: $this->project->title;
+        $metaDescription = $this->project->meta_description ?: Str::limit($this->project->description, 160);
+
         return view('livewire.frontend.project-show', [
             'project' => $this->project,
             'allImages' => $this->getAllImages(),
             'relatedProjects' => $this->getRelatedProjects(),
-        ])->layout('layouts.guest')
-            ->title($this->project->meta_title ?: $this->project->title)
-            ->description($this->project->meta_description ?: $this->project->description);
+        ])->layout('layouts.guest', [
+            'title' => $metaTitle,
+            'description' => $metaDescription,
+        ]);
     }
 }

@@ -1,16 +1,17 @@
-<div>
-    <div class="space-y-6">
+<div
+    class="flex w-full h-full min-h-screen items-start justify-center py-2.5 bg-[#2a126e20] dark:bg-[#aa91ed20] px-4 lg:px-0">
+    <div class="max-w-[1000px] w-full h-full flex flex-col gap-2.5">
         <!-- Header Actions -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center space-x-4">
-                <h2 class="text-xl font-semibold text-gray-900">Tutti i Progetti</h2>
-                <span class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-full">
+        <div class="w-full flex justify-between">
+            <div class="flex items-center gap-3.5">
+                <h2 class="font-bold text-2xl">Tutti i Progetti</h2>
+                <span class="px-3.5 py-1.5 text-sm rounded-full bg-secondary text-background-contrast dark:text-text">
                     {{ $projects->total() }} totali
                 </span>
             </div>
             <div class="mt-4 sm:mt-0 flex space-x-3">
                 <a href="{{ route('admin.projects.create') }}"
-                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-background-contrast dark:text-text bg-accent hover:bg-secondary transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -21,8 +22,8 @@
         </div>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-white rounded-lg shadow p-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2.5">
+            <div class="rounded-lg px-3.5 py-1.5 bg-background border border-background-contrast">
                 <div class="flex items-center">
                     <div class="p-2 rounded-full bg-blue-100">
                         <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,12 +33,12 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-500">Totali</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $stats['total'] }}</p>
+                        <p class="text-sm font-medium text-text">Totali</p>
+                        <p class="text-lg font-semibold text-text">{{ $stats['total'] }}</p>
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow p-4">
+            <div class="rounded-lg px-3.5 py-1.5 bg-background border border-background-contrast">
                 <div class="flex items-center">
                     <div class="p-2 rounded-full bg-green-100">
                         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,12 +47,12 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-500">Pubblicati</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $stats['published'] }}</p>
+                        <p class="text-sm font-medium text-text">Pubblicati</p>
+                        <p class="text-lg font-semibold text-text">{{ $stats['published'] }}</p>
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow p-4">
+            <div class="rounded-lg px-3.5 py-1.5 bg-background border border-background-contrast">
                 <div class="flex items-center">
                     <div class="p-2 rounded-full bg-yellow-100">
                         <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,12 +61,12 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-500">Bozze</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $stats['draft'] }}</p>
+                        <p class="text-sm font-medium text-text">Bozze</p>
+                        <p class="text-lg font-semibold text-text">{{ $stats['draft'] }}</p>
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow p-4">
+            <div class="rounded-lg px-3.5 py-1.5 bg-background border border-background-contrast">
                 <div class="flex items-center">
                     <div class="p-2 rounded-full bg-purple-100">
                         <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,25 +76,25 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-500">In Evidenza</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ $stats['featured'] }}</p>
+                        <p class="text-sm font-medium text-text">In Evidenza</p>
+                        <p class="text-lg font-semibold text-text">{{ $stats['featured'] }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-lg shadow p-4">
+        <div class="rounded-lg px-3.5 py-1.5 bg-background border border-background-contrast">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                 <!-- Search -->
                 <div class="flex-1 max-w-lg">
                     <label for="search" class="sr-only">Cerca progetti</label>
                     <div class="relative">
                         <input type="text" wire:model.live="search" id="search"
-                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            class="block w-full pl-10 pr-3 py-2 border border-background-contrast rounded-md leading-5 bg-background placeholder-text focus:outline-none focus:placeholder-text focus:ring-1 focus:ring-accent focus:border-accent"
                             placeholder="Cerca progetti...">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-5 w-5 text-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
@@ -105,7 +106,7 @@
                 <div class="flex items-center space-x-4">
                     <!-- Status Filter -->
                     <select wire:model.live="statusFilter"
-                        class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        class="block w-full pl-3 pr-10 py-2 bg-background text-base border-background-contrast focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-md">
                         <option value="">Tutti gli stati</option>
                         <option value="draft">Bozze</option>
                         <option value="published">Pubblicati</option>
@@ -114,7 +115,7 @@
 
                     <!-- Category Filter -->
                     <select wire:model.live="categoryFilter"
-                        class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        class="block w-full pl-3 pr-10 py-2 bg-background text-base border-background-contrast focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-md">
                         <option value="">Tutte le categorie</option>
                         @foreach ($categories as $category)
                             <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -123,7 +124,7 @@
 
                     <!-- Per Page -->
                     <select wire:model.live="perPage"
-                        class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        class="block w-full pl-3 pr-10 py-2 bg-background text-base border-background-contrast focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-md">
                         <option value="10">10</option>
                         <option value="15">15</option>
                         <option value="25">25</option>
@@ -134,16 +135,16 @@
         </div>
 
         <!-- Projects Table -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+        <div class="bg-background rounded-lg border border-background-contrast overflow-hidden">
+            <table class="min-w-full divide-y divide-background-contrast">
+                <thead class="">
                     <tr>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="px-6 py-3 text-left text-xs font-medium text-text uppercase tracking-wider">
                             <input type="checkbox" wire:model="selectAll" class="rounded border-gray-300">
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            class="px-6 py-3 text-left text-xs font-medium text-text uppercase tracking-wider cursor-pointer"
                             wire:click="sortBy('title')">
                             Titolo
                             @if ($sortBy === 'title')
@@ -163,16 +164,16 @@
                             @endif
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="px-6 py-3 text-left text-xs font-medium text-text uppercase tracking-wider">
                             Categorie
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            class="px-6 py-3 text-left text-xs font-medium text-text uppercase tracking-wider cursor-pointer"
                             wire:click="sortBy('status')">
                             Stato
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                            class="px-6 py-3 text-left text-xs font-medium text-text uppercase tracking-wider cursor-pointer"
                             wire:click="sortBy('created_at')">
                             Data Creazione
                         </th>
@@ -181,9 +182,9 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-background divide-y divide-background-contrast">
                     @forelse ($projects as $project)
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-background-contrast transition-colors ease-in-out duration-200">
                             <td class="px-6 py-4">
                                 <input type="checkbox" wire:model="selectedProjects" value="{{ $project->id }}"
                                     class="rounded border-gray-300">
@@ -204,8 +205,8 @@
                                         </div>
                                     @endif
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $project->title }}</div>
-                                        <div class="text-sm text-gray-500">{{ $project->client ?? 'Nessun cliente' }}
+                                        <div class="text-sm font-medium text-text">{{ $project->title }}</div>
+                                        <div class="text-sm text-text">{{ $project->client ?? 'Nessun cliente' }}
                                         </div>
                                     </div>
                                 </div>
@@ -230,15 +231,14 @@
                                     {{ ucfirst($project->status) }}
                                 </button>
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-500">
+                            <td class="px-6 py-4 text-sm text-text">
                                 {{ $project->created_at->format('d/m/Y') }}
                             </td>
                             <td class="px-6 py-4 text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
                                     @if ($project->status === 'published')
                                         <a href="{{ route('portfolio.show', $project->slug) }}" target="_blank"
-                                            class="text-gray-600 hover:text-gray-900 transition-colors"
-                                            title="Visualizza">
+                                            class="text-text hover:text-text transition-colors" title="Visualizza">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -291,8 +291,8 @@
                                             d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
                                         </path>
                                     </svg>
-                                    <h3 class="mt-4 text-sm font-medium text-gray-900">Nessun progetto trovato</h3>
-                                    <p class="mt-1 text-sm text-gray-500">
+                                    <h3 class="mt-4 text-sm font-medium text-text">Nessun progetto trovato</h3>
+                                    <p class="mt-1 text-sm text-text">
                                         @if ($search || $statusFilter || $categoryFilter)
                                             Prova a modificare i filtri di ricerca.
                                         @else
@@ -337,17 +337,17 @@
         @if (count($selectedProjects) > 0)
             <div class="fixed bottom-0 inset-x-0 pb-2 sm:pb-5 z-50">
                 <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-                    <div class="p-2 rounded-lg bg-blue-600 shadow-lg sm:p-3">
+                    <div class="p-2 rounded-lg bg-accent shadow-lg sm:p-3">
                         <div class="flex items-center justify-between flex-wrap">
                             <div class="flex-1 flex items-center">
-                                <span class="flex p-2 rounded-lg bg-blue-800">
-                                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor"
+                                <span class="flex p-2 rounded-lg bg-accent">
+                                    <svg class="h-6 w-6 text-text" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </span>
-                                <p class="ml-3 font-medium text-white">
+                                <p class="ml-3 font-medium text-text">
                                     <span>{{ count($selectedProjects) }} progetti selezionati</span>
                                 </p>
                             </div>

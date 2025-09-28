@@ -7,7 +7,7 @@
         <!-- Hero Section -->
         <x-skills-and-techs />
         <!-- Hero Section -->
-        <x-projects-preview />
+        <x-projects-preview :featuredProjects="$featuredProjects" />
         <!-- Hero Section -->
         <x-experiences />
         <!-- Hero Section -->

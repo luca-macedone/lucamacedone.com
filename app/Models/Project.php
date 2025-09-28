@@ -122,6 +122,27 @@ class Project extends Model
         return $this->featured_image ? asset('storage/' . $this->featured_image) : null;
     }
 
+    // Nel model Project.php, aggiungi questo accessor
+    public function getGalleryImagesAttribute($value)
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        // Se è già un array, restituiscilo
+        if (is_array($value)) {
+            return $value;
+        }
+
+        // Se è una stringa JSON, decodificala
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        return [];
+    }
+
     public function getGalleryImagesUrlsAttribute()
     {
         $galleryImages = $this->gallery_images;

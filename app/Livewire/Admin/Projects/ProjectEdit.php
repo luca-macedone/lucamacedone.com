@@ -101,11 +101,13 @@ class ProjectEdit extends Component
         // Immagini esistenti
         $this->existing_featured_image = $project->featured_image;
 
+        $this->existing_gallery = [];
+
         // Gestione gallery (potrebbe essere JSON)
         if ($project->gallery_images) {
             if (is_string($project->gallery_images)) {
                 $this->existing_gallery = json_decode($project->gallery_images, true) ?? [];
-            } else {
+            } elseif (is_array($project->gallery_images)) {
                 $this->existing_gallery = $project->gallery_images;
             }
         }
@@ -176,6 +178,11 @@ class ProjectEdit extends Component
                 $newGalleryPaths = [];
                 foreach ($this->gallery_images as $image) {
                     $newGalleryPaths[] = $image->store('projects/gallery', 'public');
+                }
+
+                // Assicurati che existing_gallery sia un array
+                if (!is_array($this->existing_gallery)) {
+                    $this->existing_gallery = [];
                 }
 
                 // Mantieni le immagini esistenti e aggiungi le nuove
