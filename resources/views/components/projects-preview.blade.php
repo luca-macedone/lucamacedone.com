@@ -118,9 +118,13 @@
             </div>
         @endif
 
-        {{-- Pulsante per vedere tutti i progetti --}}
-        <livewire:frontend.button :action="'open-projects-portfolio'" action_type="'route'" :label="'Vedi Tutti i Progetti'" :btn_type="'bg-accent text-background-contrast text-lg'"
-            :parameters="['route' => 'portfolio.index']" />
+        @livewire('frontend.button', [
+            'action' => 'redirectToRoute',
+            'action_type' => 'route',
+            'label' => 'Vedi Portfolio',
+            'btn_type' => 'bg-primary text-background-contrast',
+            'parameters' => ['route' => 'portfolio.index'],
+        ])
         {{-- <a href="{{ route('portfolio.index') }}"
             class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200">
             Vedi Tutti i Progetti
