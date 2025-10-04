@@ -30,9 +30,9 @@
 <div class="min-h-screen w-full flex justify-center items-center py-[5rem] px-4 lg:py-[10rem] lg:px-0"
     id="projects-preview">
     <section class="max-w-[1000px] flex flex-col gap-4 justify-center items-center">
-        <h2 class="text-4xl text-center">Progetti in Evidenza</h2>
+        <h2 class="text-4xl text-center">Featured Projects</h2>
         <p class="text-center max-w-[550px]">
-            Ecco alcuni dei miei progetti recenti che mostrano le mie competenze ed esperienza.
+            Here are some of my recent projects that showcase my skills and experience.
         </p>
 
         @if ($featuredProjects && $featuredProjects->count() > 0)
@@ -69,7 +69,7 @@
                                 {{-- Cliente (se presente) --}}
                                 @if ($project->client)
                                     <p class="text-sm text-text">
-                                        Cliente: <span class="font-medium">{{ $project->client }}</span>
+                                        Customer: <span class="font-medium">{{ $project->client }}</span>
                                     </p>
                                 @endif
 
@@ -114,23 +114,14 @@
         @else
             {{-- Messaggio quando non ci sono progetti --}}
             <div class="w-full text-center py-10">
-                <p class="text-muted">Nessun progetto in evidenza al momento.</p>
+                <p class="text-muted">No project featured yet.</p>
             </div>
         @endif
 
-        @livewire('frontend.button', [
-            'action' => 'redirectToRoute',
-            'action_type' => 'route',
-            'label' => 'Vedi Portfolio',
-            'btn_type' => 'bg-primary text-background-contrast',
-            'parameters' => ['route' => 'portfolio.index'],
+        @livewire('frontend.buttons.RoutingButton', [
+            'route' => 'portfolio.index',
+            'label' => 'See more projects',
+            'style' => 'accent',
         ])
-        {{-- <a href="{{ route('portfolio.index') }}"
-            class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200">
-            Vedi Tutti i Progetti
-            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-        </a> --}}
     </section>
 </div>

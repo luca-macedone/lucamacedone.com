@@ -7,7 +7,9 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
-        "./resources/css/**/*.css",
+        './resources/css/**/*.css',
+        './app/Livewire/**/*.php',
+        './app/View/Components/**/*.php',
     ],
     darkMode: 'class',
     theme: {
