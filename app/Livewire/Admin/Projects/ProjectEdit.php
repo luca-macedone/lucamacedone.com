@@ -5,18 +5,22 @@ namespace App\Livewire\Admin\Projects;
 use App\Models\Project;
 use App\Models\ProjectCategory;
 use App\Models\ProjectTechnology;
+use App\Models\ProjectImage;
+use App\Models\ProjectSeo;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectEdit extends Component
 {
     use WithFileUploads;
 
+    // Oggetto progetto
     public Project $project;
 
-    // Campi del form
+    // Campi base del progetto
     public $title = '';
     public $description = '';
     public $content = '';
@@ -31,38 +35,46 @@ class ProjectEdit extends Component
 
     // Upload files
     public $featured_image;
-    public $gallery_images = [];
-    public $existing_featured_image = '';
-    public $existing_gallery = [];
+    public $new_gallery_images = [];
+
+    // Immagini esistenti
+    public $existing_featured_image;
+    public $existing_gallery_images = [];
+    public $images_to_delete = [];
 
     // Relazioni
     public $selected_categories = [];
     public $selected_technologies = [];
 
-    // SEO
+    // SEO fields
     public $meta_title = '';
     public $meta_description = '';
     public $meta_keywords = '';
+    public $og_image;
+    public $existing_og_image;
 
     protected $rules = [
-        'title' => 'required|string|max:255',
-        'description' => 'required|string|max:1000',
-        'content' => 'nullable|string',
-        'client' => 'nullable|string|max:255',
-        'project_url' => 'nullable|url',
-        'github_url' => 'nullable|url',
+        'title' => 'required|min:3|max:255',
+        'description' => 'required|min:10',
+        'content' => 'nullable',
+        'client' => 'nullable|max:255',
+        'project_url' => 'nullable|url|max:255',
+        'github_url' => 'nullable|url|max:255',
         'start_date' => 'nullable|date',
         'end_date' => 'nullable|date|after_or_equal:start_date',
         'status' => 'required|in:draft,published,featured',
         'is_featured' => 'boolean',
         'sort_order' => 'integer|min:0',
         'featured_image' => 'nullable|image|max:2048',
-        'gallery_images.*' => 'nullable|image|max:2048',
+        'new_gallery_images.*' => 'image|max:2048',
         'selected_categories' => 'array',
+        'selected_categories.*' => 'exists:project_categories,id',
         'selected_technologies' => 'array',
-        'meta_title' => 'nullable|string|max:60',
-        'meta_description' => 'nullable|string|max:160',
-        'meta_keywords' => 'nullable|string|max:255',
+        'selected_technologies.*' => 'exists:project_technologies,id',
+        'meta_title' => 'nullable|max:60',
+        'meta_description' => 'nullable|max:160',
+        'meta_keywords' => 'nullable|max:255',
+        'og_image' => 'nullable|image|max:2048',
     ];
 
     protected $messages = [
@@ -70,17 +82,17 @@ class ProjectEdit extends Component
         'description.required' => 'La descrizione è obbligatoria.',
         'featured_image.image' => 'Il file deve essere un\'immagine.',
         'featured_image.max' => 'L\'immagine non può superare i 2MB.',
-        'gallery_images.*.image' => 'Tutti i file devono essere immagini.',
-        'gallery_images.*.max' => 'Le immagini non possono superare i 2MB.',
+        'new_gallery_images.*.image' => 'Tutti i file devono essere immagini.',
+        'new_gallery_images.*.max' => 'Le immagini non possono superare i 2MB.',
         'end_date.after_or_equal' => 'La data di fine deve essere successiva o uguale alla data di inizio.',
     ];
 
     public function mount(Project $project)
     {
-        // Carica le relazioni se non sono già caricate
-        $this->project = $project->load(['categories', 'technologies']);
+        // Carica il progetto con tutte le relazioni necessarie
+        $this->project = $project->load(['categories', 'technologies', 'galleryImages', 'seo']);
 
-        // Popola i campi con i dati esistenti
+        // Popola i campi base
         $this->title = $project->title;
         $this->description = $project->description;
         $this->content = $project->content;
@@ -93,28 +105,25 @@ class ProjectEdit extends Component
         $this->is_featured = $project->is_featured;
         $this->sort_order = $project->sort_order;
 
-        // SEO
-        $this->meta_title = $project->meta_title;
-        $this->meta_description = $project->meta_description;
-        $this->meta_keywords = $project->meta_keywords;
-
         // Immagini esistenti
         $this->existing_featured_image = $project->featured_image;
+        $this->existing_gallery_images = $project->galleryImages->toArray();
 
-        $this->existing_gallery = [];
+        // Relazioni esistenti
+        $this->selected_categories = $project->categories->pluck('id')->toArray();
+        $this->selected_technologies = $project->technologies->pluck('id')->toArray();
 
-        // Gestione gallery (potrebbe essere JSON)
-        if ($project->gallery_images) {
-            if (is_string($project->gallery_images)) {
-                $this->existing_gallery = json_decode($project->gallery_images, true) ?? [];
-            } elseif (is_array($project->gallery_images)) {
-                $this->existing_gallery = $project->gallery_images;
-            }
+        // SEO data
+        if ($project->seo) {
+            $this->meta_title = $project->seo->meta_title;
+            $this->meta_description = $project->seo->meta_description;
+            $this->meta_keywords = $project->seo->keywords_string; // Converte array in stringa
+            $this->existing_og_image = $project->seo->og_image;
+        } else {
+            // Se non esistono dati SEO, usa valori di default
+            $this->meta_title = Str::limit($project->title, 60);
+            $this->meta_description = Str::limit(strip_tags($project->description), 160);
         }
-
-        // Relazioni esistenti (con controllo null-safe)
-        $this->selected_categories = $project->categories ? $project->categories->pluck('id')->toArray() : [];
-        $this->selected_technologies = $project->technologies ? $project->technologies->pluck('id')->toArray() : [];
     }
 
     public function updatedTitle()
@@ -129,8 +138,26 @@ class ProjectEdit extends Component
     {
         // Auto-genera meta_description se vuota
         if (empty($this->meta_description)) {
-            $this->meta_description = Str::limit($this->description, 160);
+            $this->meta_description = Str::limit(strip_tags($this->description), 160);
         }
+    }
+
+    public function removeExistingGalleryImage($imageId)
+    {
+        // Aggiungi l'ID dell'immagine da eliminare
+        $this->images_to_delete[] = $imageId;
+
+        // Rimuovi dall'array delle immagini esistenti per l'interfaccia
+        $this->existing_gallery_images = array_filter(
+            $this->existing_gallery_images,
+            fn($img) => $img['id'] != $imageId
+        );
+    }
+
+    public function removeNewGalleryImage($index)
+    {
+        unset($this->new_gallery_images[$index]);
+        $this->new_gallery_images = array_values($this->new_gallery_images);
     }
 
     public function save()
@@ -138,7 +165,9 @@ class ProjectEdit extends Component
         $this->validate();
 
         try {
-            // Aggiorna i campi base
+            DB::beginTransaction();
+
+            // Aggiorna i campi base del progetto
             $this->project->title = $this->title;
 
             // Aggiorna slug solo se il titolo è cambiato
@@ -157,71 +186,125 @@ class ProjectEdit extends Component
             $this->project->is_featured = $this->is_featured;
             $this->project->sort_order = $this->sort_order;
 
-            // SEO
-            $this->project->meta_title = $this->meta_title ?: Str::limit($this->title, 60);
-            $this->project->meta_description = $this->meta_description ?: Str::limit($this->description, 160);
-            $this->project->meta_keywords = $this->meta_keywords;
-
             // Gestisci featured image
             if ($this->featured_image) {
-                // Elimina vecchia immagine
+                // Elimina vecchia immagine se esiste
                 if ($this->existing_featured_image) {
                     Storage::disk('public')->delete($this->existing_featured_image);
                 }
                 // Salva nuova immagine
                 $this->project->featured_image = $this->featured_image->store('projects', 'public');
-                $this->existing_featured_image = $this->project->featured_image;
-            }
-
-            // Gestisci gallery images
-            if (!empty($this->gallery_images)) {
-                $newGalleryPaths = [];
-                foreach ($this->gallery_images as $image) {
-                    $newGalleryPaths[] = $image->store('projects/gallery', 'public');
-                }
-
-                // Assicurati che existing_gallery sia un array
-                if (!is_array($this->existing_gallery)) {
-                    $this->existing_gallery = [];
-                }
-
-                // Mantieni le immagini esistenti e aggiungi le nuove
-                $allGalleryImages = array_merge($this->existing_gallery, $newGalleryPaths);
-                $this->project->gallery_images = json_encode($allGalleryImages);
-                $this->existing_gallery = $allGalleryImages;
-
-                // Reset upload field
-                $this->gallery_images = [];
             }
 
             $this->project->save();
 
-            // Sincronizza relazioni
+            // Gestisci eliminazione immagini della galleria
+            if (!empty($this->images_to_delete)) {
+                $imagesToDelete = ProjectImage::whereIn('id', $this->images_to_delete)
+                    ->where('project_id', $this->project->id)
+                    ->get();
+
+                foreach ($imagesToDelete as $image) {
+                    // Elimina file fisico
+                    if (Storage::disk('public')->exists($image->filename)) {
+                        Storage::disk('public')->delete($image->filename);
+                    }
+                    // Elimina record dal database
+                    $image->delete();
+                }
+            }
+
+            // Aggiungi nuove immagini alla galleria
+            if (!empty($this->new_gallery_images)) {
+                $currentMaxOrder = ProjectImage::where('project_id', $this->project->id)
+                    ->max('sort_order') ?? -1;
+
+                foreach ($this->new_gallery_images as $index => $image) {
+                    $imagePath = $image->store('projects/gallery', 'public');
+
+                    ProjectImage::create([
+                        'project_id' => $this->project->id,
+                        'filename' => $imagePath,
+                        'original_name' => $image->getClientOriginalName(),
+                        'alt_text' => $this->title . ' - Gallery Image',
+                        'caption' => null,
+                        'sort_order' => $currentMaxOrder + $index + 1,
+                        'type' => 'gallery'
+                    ]);
+                }
+            }
+
+            // Gestisci dati SEO
+            $seoData = [
+                'meta_title' => $this->meta_title ?: Str::limit($this->title, 60),
+                'meta_description' => $this->meta_description ?: Str::limit(strip_tags($this->description), 160),
+                'meta_keywords' => null,
+            ];
+
+            // Converti keywords string in array
+            if ($this->meta_keywords) {
+                $seoData['meta_keywords'] = json_encode(array_map('trim', explode(',', $this->meta_keywords)));
+            }
+
+            // Gestisci OG image
+            if ($this->og_image) {
+                // Elimina vecchia OG image se diversa da featured image
+                if ($this->existing_og_image && $this->existing_og_image !== $this->project->featured_image) {
+                    Storage::disk('public')->delete($this->existing_og_image);
+                }
+                $seoData['og_image'] = $this->og_image->store('projects/og', 'public');
+            } elseif (!$this->existing_og_image && $this->project->featured_image) {
+                // Usa featured image come fallback per OG image
+                $seoData['og_image'] = $this->project->featured_image;
+            }
+
+            // Crea o aggiorna record SEO
+            ProjectSeo::updateOrCreate(
+                ['project_id' => $this->project->id],
+                $seoData
+            );
+
+            // Sincronizza relazioni many-to-many
             $this->project->categories()->sync($this->selected_categories);
             $this->project->technologies()->sync($this->selected_technologies);
 
+            DB::commit();
+
+            // Reset campi upload dopo il salvataggio
+            $this->featured_image = null;
+            $this->new_gallery_images = [];
+            $this->og_image = null;
+            $this->images_to_delete = [];
+
+            // Ricarica le immagini della galleria
+            $this->existing_gallery_images = $this->project->fresh()->galleryImages->toArray();
+
             session()->flash('message', 'Progetto aggiornato con successo!');
         } catch (\Exception $e) {
+            DB::rollback();
             session()->flash('error', 'Errore nell\'aggiornamento: ' . $e->getMessage());
+        }
+    }
+
+    public function saveAndClose()
+    {
+        $this->save();
+
+        if (!session()->has('error')) {
+            return redirect()->route('admin.projects.index');
         }
     }
 
     public function toggleStatus()
     {
         $this->status = $this->status === 'published' ? 'draft' : 'published';
-        $this->project->update(['status' => $this->status]);
-
-        $message = $this->status === 'published' ? 'Progetto pubblicato' : 'Progetto impostato come bozza';
-        session()->flash('message', $message);
+        $this->save();
     }
 
     public function toggleFeatured()
     {
         $this->is_featured = !$this->is_featured;
-        $this->project->update(['is_featured' => $this->is_featured]);
-
-        $message = $this->is_featured ? 'Progetto messo in evidenza' : 'Progetto rimosso dall\'evidenza';
-        session()->flash('message', $message);
+        $this->save();
     }
 
     private function generateUniqueSlug($title, $excludeId = null)
@@ -248,45 +331,17 @@ class ProjectEdit extends Component
         return $slug;
     }
 
-    public function removeExistingGalleryImage($index)
+    public function reorderGalleryImages($orderedIds)
     {
-        if (isset($this->existing_gallery[$index])) {
-            // Elimina fisicamente il file
-            Storage::disk('public')->delete($this->existing_gallery[$index]);
-
-            // Rimuovi dall'array
-            unset($this->existing_gallery[$index]);
-            $this->existing_gallery = array_values($this->existing_gallery);
-
-            // Aggiorna nel database
-            $this->project->gallery_images = json_encode($this->existing_gallery);
-            $this->project->save();
-
-            session()->flash('message', 'Immagine rimossa dalla galleria');
+        // Riordina le immagini della galleria
+        foreach ($orderedIds as $order => $imageId) {
+            ProjectImage::where('id', $imageId)
+                ->where('project_id', $this->project->id)
+                ->update(['sort_order' => $order]);
         }
-    }
 
-    public function removeFeaturedImage()
-    {
-        if ($this->existing_featured_image) {
-            // Elimina fisicamente il file
-            Storage::disk('public')->delete($this->existing_featured_image);
-
-            // Aggiorna nel database
-            $this->project->featured_image = null;
-            $this->project->save();
-
-            // Reset variabile locale
-            $this->existing_featured_image = '';
-
-            session()->flash('message', 'Immagine in evidenza rimossa');
-        }
-    }
-
-    public function removeGalleryImage($index)
-    {
-        unset($this->gallery_images[$index]);
-        $this->gallery_images = array_values($this->gallery_images);
+        // Ricarica le immagini nell'ordine aggiornato
+        $this->existing_gallery_images = $this->project->fresh()->galleryImages->toArray();
     }
 
     public function render()

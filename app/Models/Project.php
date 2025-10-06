@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class Project extends Model
 {
@@ -19,8 +20,6 @@ class Project extends Model
         'description',
         'content',
         'featured_image',
-        'gallery_images',  // Cambiato da 'gallery' a 'gallery_images'
-        'technologies',
         'client',
         'project_url',
         'github_url',
@@ -29,20 +28,19 @@ class Project extends Model
         'status',
         'sort_order',
         'is_featured',
-        'meta_title',       // Aggiunto
-        'meta_description', // Aggiunto
-        'meta_keywords'     // Aggiunto
     ];
 
     protected $casts = [
-        'gallery_images' => 'array',  // Cast automatico ad array
-        'technologies' => 'array',
         'start_date' => 'date',
         'end_date' => 'date',
         'is_featured' => 'boolean'
     ];
 
-    // Genera automaticamente lo slug dal titolo
+    protected $with = ['categories', 'technologies']; // Carica sempre le relazioni
+
+    /**
+     * Boot method per gestire automaticamente lo slug
+     */
     protected static function boot()
     {
         parent::boot();
@@ -62,7 +60,7 @@ class Project extends Model
         });
 
         static::updating(function ($project) {
-            if ($project->isDirty('title')) {
+            if ($project->isDirty('title') && !$project->isDirty('slug')) {
                 $project->slug = Str::slug($project->title);
 
                 // Assicurati che lo slug sia unico (escludendo il record corrente)
@@ -77,30 +75,66 @@ class Project extends Model
                 }
             }
         });
+
+        // Quando un progetto viene eliminato, elimina anche i record correlati
+        static::deleting(function ($project) {
+            // Le immagini vengono eliminate automaticamente grazie a onDelete('cascade')
+            // Ma dobbiamo eliminare i file fisici
+            if ($project->featured_image) {
+                Storage::disk('public')->delete($project->featured_image);
+            }
+
+            foreach ($project->images as $image) {
+                Storage::disk('public')->delete($image->filename);
+            }
+        });
     }
 
-    // Relazioni
+    /**
+     * Relazione con le categorie
+     */
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(ProjectCategory::class, 'project_category_pivot');
     }
 
+    /**
+     * Relazione con le tecnologie
+     */
     public function technologies(): BelongsToMany
     {
         return $this->belongsToMany(ProjectTechnology::class, 'project_technology_pivot');
     }
 
+    /**
+     * Relazione con le immagini della galleria
+     */
     public function images(): HasMany
     {
         return $this->hasMany(ProjectImage::class)->orderBy('sort_order');
     }
 
+    /**
+     * Relazione per ottenere solo le immagini della galleria
+     */
+    public function galleryImages(): HasMany
+    {
+        return $this->hasMany(ProjectImage::class)
+            ->where('type', 'gallery')
+            ->orderBy('sort_order');
+    }
+
+    /**
+     * Relazione con i dati SEO
+     */
     public function seo(): HasOne
     {
         return $this->hasOne(ProjectSeo::class);
     }
 
-    // Scopes
+    /**
+     * Scopes per query comuni
+     */
     public function scopePublished($query)
     {
         return $query->where('status', 'published');
@@ -116,85 +150,87 @@ class Project extends Model
         return $query->orderBy('sort_order')->orderBy('created_at', 'desc');
     }
 
-    // Accessors
+    public function scopeWithFullData($query)
+    {
+        return $query->with(['categories', 'technologies', 'images', 'seo']);
+    }
+
+    /**
+     * Accessors per compatibilità e convenienza
+     */
     public function getFeaturedImageUrlAttribute()
     {
-        return $this->featured_image ? asset('storage/' . $this->featured_image) : null;
+        return $this->featured_image
+            ? asset('storage/' . $this->featured_image)
+            : asset('images/placeholder-project.jpg'); // Placeholder di default
     }
 
-    // Nel model Project.php, aggiungi questo accessor
-    public function getGalleryImagesAttribute($value)
+    /**
+     * Ottieni tutte le URL delle immagini della galleria
+     */
+    public function getGalleryUrlsAttribute()
     {
-        if (empty($value)) {
-            return [];
-        }
-
-        // Se è già un array, restituiscilo
-        if (is_array($value)) {
-            return $value;
-        }
-
-        // Se è una stringa JSON, decodificala
-        if (is_string($value)) {
-            $decoded = json_decode($value, true);
-            return is_array($decoded) ? $decoded : [];
-        }
-
-        return [];
+        return $this->galleryImages->map(function ($image) {
+            return [
+                'url' => asset('storage/' . $image->filename),
+                'alt' => $image->alt_text,
+                'caption' => $image->caption,
+            ];
+        });
     }
 
-    public function getGalleryImagesUrlsAttribute()
+    /**
+     * Ottieni i dati SEO con fallback
+     */
+    public function getMetaTitleAttribute()
     {
-        $galleryImages = $this->gallery_images;
-
-        if (!$galleryImages) {
-            return [];
-        }
-
-        // Se è una stringa JSON, decodificala
-        if (is_string($galleryImages)) {
-            $galleryImages = json_decode($galleryImages, true) ?? [];
-        }
-
-        // Assicurati che sia un array
-        if (!is_array($galleryImages)) {
-            return [];
-        }
-
-        return collect($galleryImages)->map(function ($image) {
-            return asset('storage/' . $image);
-        })->toArray();
+        return $this->seo?->meta_title ?: Str::limit($this->title, 60);
     }
 
-    public function getExcerptAttribute()
+    public function getMetaDescriptionAttribute()
     {
-        return Str::limit(strip_tags($this->description), 150);
+        return $this->seo?->meta_description ?: Str::limit(strip_tags($this->description), 160);
     }
 
-    // Mutators
-    public function setMetaKeywordsAttribute($value)
+    public function getMetaKeywordsAttribute()
     {
-        // Se è una stringa, mantienila come stringa
-        // Se è un array, convertilo in stringa separata da virgole
-        if (is_array($value)) {
-            $this->attributes['meta_keywords'] = implode(',', $value);
-        } else {
-            $this->attributes['meta_keywords'] = $value;
+        if ($this->seo && $this->seo->meta_keywords) {
+            return is_array($this->seo->meta_keywords)
+                ? implode(', ', $this->seo->meta_keywords)
+                : $this->seo->meta_keywords;
         }
+
+        // Genera keywords automatici basati su categorie e tecnologie
+        $keywords = [];
+        $keywords = array_merge($keywords, $this->categories->pluck('name')->toArray());
+        $keywords = array_merge($keywords, $this->technologies->pluck('name')->toArray());
+        return implode(', ', $keywords);
     }
 
-    public function getMetaKeywordsArrayAttribute()
+    /**
+     * Controlla se il progetto è completo
+     */
+    public function getIsCompleteAttribute()
     {
-        // Restituisce meta_keywords come array
-        if ($this->meta_keywords) {
-            return explode(',', $this->meta_keywords);
+        return $this->end_date && $this->end_date->isPast();
+    }
+
+    /**
+     * Ottieni la durata del progetto in giorni
+     */
+    public function getDurationInDaysAttribute()
+    {
+        if ($this->start_date && $this->end_date) {
+            return $this->start_date->diffInDays($this->end_date);
         }
-        return [];
+        return null;
     }
 
-    // Route model binding per slug
-    public function getRouteKeyName()
+    /**
+     * Ottieni un array di tecnologie raggruppate per categoria
+     */
+    public function getTechnologiesByCategoryAttribute()
     {
-        return 'slug';
+        return $this->technologies->groupBy('category');
     }
 }
