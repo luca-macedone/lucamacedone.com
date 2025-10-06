@@ -14,14 +14,14 @@ class TechnologyManager extends Component
 
     // Filtri e ricerca
     public $search = '';
-    public $categoryFilter = '';
+    public $technologyTypeFilter = ''; // Rinominato per chiarezza
     public $perPage = 15;
 
     // Form fields
     public $showForm = false;
     public $editingId = null;
     public $name = '';
-    public $category = '';
+    public $category = ''; // Questo è il TIPO di tecnologia (Frontend, Backend, etc.)
     public $icon = '';
     public $color = '#6B7280';
     public $newCategory = '';
@@ -31,63 +31,71 @@ class TechnologyManager extends Component
     public $selectedTechnologies = [];
     public $selectAll = false;
 
-    // Categorie disponibili
-    public $availableCategories = [];
+    // TIPI di tecnologie disponibili (NON categorie progetti!)
+    public $availableTechnologyTypes = [];
 
     // Ordinamento
     public $sortField = 'name';
     public $sortDirection = 'asc';
 
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'category' => 'required_if:useNewCategory,false|nullable|string|max:100',
-        'newCategory' => 'required_if:useNewCategory,true|nullable|string|max:100',
-        'icon' => 'nullable|string|max:255',
-        'color' => 'required|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
-    ];
+    protected function rules()
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'category' => 'nullable|string|max:100', // Categoria/tipo tecnologia è opzionale
+            'newCategory' => 'required_if:useNewCategory,true|nullable|string|max:100',
+            'icon' => 'nullable|string|max:255',
+            'color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+        ];
+    }
 
     protected $messages = [
-        'name.required' => 'Il nome è obbligatorio.',
+        'name.required' => 'Il nome della tecnologia è obbligatorio.',
         'name.max' => 'Il nome non può superare i 255 caratteri.',
-        'category.required_if' => 'Seleziona una categoria o creane una nuova.',
-        'newCategory.required_if' => 'Inserisci il nome della nuova categoria.',
-        'color.regex' => 'Il colore deve essere in formato esadecimale valido.',
+        'newCategory.required_if' => 'Inserisci il nome del nuovo tipo di tecnologia.',
+        'color.required' => 'Il colore è obbligatorio.',
+        'color.regex' => 'Il colore deve essere in formato esadecimale valido (es. #FF5733).',
     ];
 
     public function mount()
     {
-        $this->loadCategories();
+        $this->loadTechnologyTypes();
     }
 
     /**
-     * Carica categorie disponibili
+     * Carica i TIPI di tecnologie disponibili (NON le categorie dei progetti!)
+     * Esempi: Frontend, Backend, Database, Framework, etc.
      */
-    public function loadCategories()
+    public function loadTechnologyTypes()
     {
-        // Categorie da config
-        $configCategories = config('projects.technologies.categories', [
+        // Tipi di tecnologie predefiniti (questi NON sono ProjectCategory!)
+        $predefinedTypes = [
             'Frontend',
             'Backend',
             'Database',
             'Framework',
+            'CMS',
             'Tool',
-            'Cloud',
+            'Cloud/Hosting',
             'Mobile',
             'Design',
             'Testing',
             'DevOps',
-            'AI/ML'
-        ]);
+            'AI/ML',
+            'Version Control',
+            'API',
+            'Other'
+        ];
 
-        // Categorie esistenti nel database
-        $dbCategories = ProjectTechnology::distinct()
+        // Tipi esistenti nel database (campo 'category' della tabella project_technologies)
+        $existingTypes = ProjectTechnology::distinct()
             ->whereNotNull('category')
             ->pluck('category')
             ->toArray();
 
         // Unisci e ordina
-        $this->availableCategories = collect($configCategories)
-            ->merge($dbCategories)
+        $this->availableTechnologyTypes = collect($predefinedTypes)
+            ->merge($existingTypes)
             ->unique()
             ->sort()
             ->values()
@@ -127,20 +135,22 @@ class TechnologyManager extends Component
         $this->validate();
 
         try {
-            $categoryToUse = $this->useNewCategory ? $this->newCategory : $this->category;
+            // Se sta creando un nuovo tipo di tecnologia
+            $technologyType = $this->useNewCategory ? $this->newCategory : $this->category;
 
             ProjectTechnology::create([
                 'name' => $this->name,
                 'slug' => Str::slug($this->name),
-                'category' => $categoryToUse,
+                'category' => $technologyType ?: null, // Tipo di tecnologia (opzionale)
                 'icon' => $this->icon ?: null,
                 'color' => $this->color,
             ]);
 
-            session()->flash('success', 'Tecnologia creata con successo.');
+            session()->flash('success', 'Tecnologia "' . $this->name . '" creata con successo.');
 
             $this->resetForm();
-            $this->loadCategories();
+            $this->loadTechnologyTypes(); // Ricarica i tipi se ne è stato aggiunto uno nuovo
+
         } catch (\Exception $e) {
             session()->flash('error', 'Errore nella creazione: ' . $e->getMessage());
         }
@@ -155,7 +165,7 @@ class TechnologyManager extends Component
 
         $this->editingId = $id;
         $this->name = $technology->name;
-        $this->category = $technology->category;
+        $this->category = $technology->category; // Tipo di tecnologia
         $this->icon = $technology->icon;
         $this->color = $technology->color ?: '#6B7280';
         $this->showForm = true;
@@ -172,20 +182,20 @@ class TechnologyManager extends Component
         try {
             $technology = ProjectTechnology::findOrFail($this->editingId);
 
-            $categoryToUse = $this->useNewCategory ? $this->newCategory : $this->category;
+            $technologyType = $this->useNewCategory ? $this->newCategory : $this->category;
 
             $technology->update([
                 'name' => $this->name,
                 'slug' => Str::slug($this->name),
-                'category' => $categoryToUse,
+                'category' => $technologyType ?: null,
                 'icon' => $this->icon ?: null,
                 'color' => $this->color,
             ]);
 
-            session()->flash('success', 'Tecnologia aggiornata con successo.');
+            session()->flash('success', 'Tecnologia "' . $this->name . '" aggiornata con successo.');
 
             $this->resetForm();
-            $this->loadCategories();
+            $this->loadTechnologyTypes();
         } catch (\Exception $e) {
             session()->flash('error', 'Errore nell\'aggiornamento: ' . $e->getMessage());
         }
@@ -199,15 +209,16 @@ class TechnologyManager extends Component
         try {
             $technology = ProjectTechnology::findOrFail($id);
 
-            // Verifica se utilizzata
+            // Verifica se utilizzata in progetti
             if ($technology->projects()->count() > 0) {
-                session()->flash('error', 'Impossibile eliminare: tecnologia utilizzata in ' .
+                session()->flash('error', 'Impossibile eliminare "' . $technology->name . '": utilizzata in ' .
                     $technology->projects()->count() . ' progetti.');
                 return;
             }
 
+            $name = $technology->name;
             $technology->delete();
-            session()->flash('success', 'Tecnologia eliminata con successo.');
+            session()->flash('success', 'Tecnologia "' . $name . '" eliminata con successo.');
         } catch (\Exception $e) {
             session()->flash('error', 'Errore nell\'eliminazione: ' . $e->getMessage());
         }
@@ -223,6 +234,7 @@ class TechnologyManager extends Component
 
             $deleted = 0;
             $skipped = 0;
+            $skippedNames = [];
 
             foreach ($technologies as $tech) {
                 if ($tech->projects()->count() == 0) {
@@ -230,12 +242,16 @@ class TechnologyManager extends Component
                     $deleted++;
                 } else {
                     $skipped++;
+                    $skippedNames[] = $tech->name;
                 }
             }
 
             $message = "Eliminate $deleted tecnologie.";
             if ($skipped > 0) {
-                $message .= " $skipped non eliminate perché in uso.";
+                $message .= " $skipped non eliminate perché in uso: " . implode(', ', array_slice($skippedNames, 0, 3));
+                if (count($skippedNames) > 3) {
+                    $message .= ' e altre';
+                }
             }
 
             session()->flash('success', $message);
@@ -274,7 +290,7 @@ class TechnologyManager extends Component
     }
 
     /**
-     * Toggle categoria nuova/esistente
+     * Toggle modalità nuovo tipo di tecnologia
      */
     public function toggleCategoryMode()
     {
@@ -287,7 +303,7 @@ class TechnologyManager extends Component
     }
 
     /**
-     * Ottieni query tecnologie
+     * Ottieni query tecnologie con filtri
      */
     private function getTechnologies()
     {
@@ -298,8 +314,8 @@ class TechnologyManager extends Component
                         ->orWhere('category', 'like', '%' . $this->search . '%');
                 });
             })
-            ->when($this->categoryFilter, function ($query) {
-                $query->where('category', $this->categoryFilter);
+            ->when($this->technologyTypeFilter, function ($query) {
+                $query->where('category', $this->technologyTypeFilter);
             })
             ->orderBy($this->sortField, $this->sortDirection);
     }
@@ -309,24 +325,24 @@ class TechnologyManager extends Component
      */
     public function resetFilters()
     {
-        $this->reset(['search', 'categoryFilter']);
+        $this->reset(['search', 'technologyTypeFilter']);
         $this->resetPage();
     }
 
     /**
-     * Esporta tecnologie
+     * Esporta tecnologie in CSV
      */
     public function export()
     {
         $technologies = $this->getTechnologies()->get();
 
-        $csv = "Nome,Categoria,Colore,Progetti\n";
+        $csv = "Nome,Tipo,Colore,Progetti Associati\n";
         foreach ($technologies as $tech) {
             $csv .= sprintf(
                 "%s,%s,%s,%d\n",
                 $tech->name,
-                $tech->category ?: 'N/A',
-                $tech->color ?: 'N/A',
+                $tech->category ?: 'Non categorizzata',
+                $tech->color ?: 'Default',
                 $tech->projects_count
             );
         }
@@ -345,12 +361,12 @@ class TechnologyManager extends Component
         $stats = [
             'total' => ProjectTechnology::count(),
             'with_projects' => ProjectTechnology::has('projects')->count(),
-            'categories' => ProjectTechnology::distinct()->whereNotNull('category')->count('category'),
+            'types' => ProjectTechnology::distinct()->whereNotNull('category')->count('category'),
         ];
 
         return view('livewire.admin.technologies.technology-manager', [
             'technologies' => $technologies,
             'stats' => $stats,
-        ]);
+        ])->layout('layouts.app');
     }
 }

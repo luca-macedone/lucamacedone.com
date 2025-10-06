@@ -97,27 +97,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/reorder', [ProjectController::class, 'reorder'])->name('reorder');
     });
 
-    // ===== GESTIONE GALLERIA IMMAGINI =====
-    Route::prefix('projects/{project}')->name('projects.')->group(function () {
-        Route::get('/gallery', \App\Livewire\Admin\Media\GalleryManager::class)->name('gallery');
-        Route::get('/seo', \App\Livewire\Admin\Seo\SeoManager::class)->name('seo');
-    });
-
-    // ===== GESTIONE CATEGORIE (aggiorna con Livewire component) =====
+    // ===== GESTIONE CATEGORIE =====
     Route::prefix('categories')->name('categories.')->group(function () {
-        Route::get('/', [CategoryController::class, 'index'])->name('index');
-        Route::get('/create', \App\Livewire\Admin\CategoryForm::class)->name('create');
-        Route::get('/{category}/edit', \App\Livewire\Admin\CategoryForm::class)->name('edit');
-        Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
-        Route::post('/reorder', [CategoryController::class, 'reorder'])->name('reorder');
+        // Usa il CategoryManager invece del Controller
+        Route::get('/', \App\Livewire\Admin\Categories\CategoryManager::class)->name('index');
     });
 
-    // ===== GESTIONE TECNOLOGIE (aggiorna con Livewire component) =====
+    // ===== GESTIONE TECNOLOGIE =====
     Route::prefix('technologies')->name('technologies.')->group(function () {
-        Route::get('/', [TechnologyController::class, 'index'])->name('index');
-        Route::get('/create', \App\Livewire\Admin\TechnologyForm::class)->name('create');
-        Route::get('/{technology}/edit', \App\Livewire\Admin\TechnologyForm::class)->name('edit');
-        Route::delete('/{technology}', [TechnologyController::class, 'destroy'])->name('destroy');
+        // Usa il TechnologyManager invece del Controller
+        Route::get('/', \App\Livewire\Admin\Technologies\TechnologyManager::class)->name('index');
     });
 
     // ===== IMPOSTAZIONI =====

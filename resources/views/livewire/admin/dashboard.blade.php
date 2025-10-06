@@ -14,6 +14,15 @@
                     class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
                     Gestisci Progetti
                 </a>
+                <a href="{{ route('admin.categories.index') }}"
+                    class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
+                    Gestisci Categorie
+                </a>
+
+                <a href="{{ route('admin.technologies.index') }}"
+                    class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
+                    Gestisci Tecnologie
+                </a>
                 <a href="{{ route('home') }}"
                     class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
                     Visualizza Sito

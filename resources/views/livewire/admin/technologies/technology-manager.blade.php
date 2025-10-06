@@ -23,13 +23,13 @@
                 <div class="text-2xl font-bold text-green-600">{{ $stats['with_projects'] }}</div>
             </div>
             <div class="bg-white rounded-lg shadow p-4">
-                <div class="text-sm text-gray-500">Categorie</div>
-                <div class="text-2xl font-bold text-blue-600">{{ $stats['categories'] }}</div>
+                <div class="text-sm text-gray-500">Tipi di Tecnologie</div>
+                <div class="text-2xl font-bold text-blue-600">{{ $stats['types'] }}</div>
             </div>
         </div>
     </div>
 
-    {{-- Form Creazione/Modifica (collapsible) --}}
+    {{-- Form Creazione/Modifica --}}
     @if ($showForm)
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6" wire:key="form-section">
             <h3 class="text-lg font-semibold mb-4">
@@ -38,41 +38,48 @@
 
             <form wire:submit.prevent="{{ $editingId ? 'update' : 'create' }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {{-- Nome --}}
+                    {{-- Nome Tecnologia --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Nome *
+                            Nome Tecnologia *
                         </label>
-                        <input type="text" wire:model="name" placeholder="es. Laravel, React, MySQL"
+                        <input type="text" wire:model="name" placeholder="es. Laravel, React, MySQL, Docker"
                             class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         @error('name')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- Categoria --}}
+                    {{-- Tipo di Tecnologia (NON categoria progetto!) --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Categoria
+                            Tipo di Tecnologia <span class="text-xs text-gray-500">(opzionale)</span>
                         </label>
                         <div class="flex gap-2">
                             @if (!$useNewCategory)
                                 <select wire:model="category"
                                     class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Seleziona categoria</option>
-                                    @foreach ($availableCategories as $cat)
-                                        <option value="{{ $cat }}">{{ $cat }}</option>
-                                    @endforeach
+                                    <option value="">-- Seleziona tipo --</option>
+                                    <optgroup label="Tipi comuni">
+                                        @foreach ($availableTechnologyTypes as $type)
+                                            <option value="{{ $type }}">{{ $type }}</option>
+                                        @endforeach
+                                    </optgroup>
                                 </select>
                             @else
-                                <input type="text" wire:model="newCategory" placeholder="Nuova categoria"
+                                <input type="text" wire:model="newCategory"
+                                    placeholder="Nuovo tipo (es. Backend, Frontend, Database)"
                                     class="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                             @endif
                             <button type="button" wire:click="toggleCategoryMode"
-                                class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                                {{ $useNewCategory ? 'Esistente' : 'Nuova' }}
+                                class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                                title="{{ $useNewCategory ? 'Seleziona tipo esistente' : 'Crea nuovo tipo' }}">
+                                {{ $useNewCategory ? '📋' : '➕' }}
                             </button>
                         </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Il tipo aiuta a organizzare le tecnologie (es. Backend, Frontend, Database, DevOps)
+                        </p>
                         @error('category')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -84,9 +91,9 @@
                     {{-- Icona --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Icona (classe CSS o emoji)
+                            Icona <span class="text-xs text-gray-500">(emoji o classe CSS)</span>
                         </label>
-                        <input type="text" wire:model="icon" placeholder="es. fab fa-laravel o 🚀"
+                        <input type="text" wire:model="icon" placeholder="es. 🚀 o fab fa-laravel"
                             class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         @error('icon')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -96,7 +103,7 @@
                     {{-- Colore --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Colore
+                            Colore Distintivo
                         </label>
                         <div class="flex gap-2">
                             <input type="color" wire:model="color"
@@ -108,6 +115,15 @@
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
+                </div>
+
+                {{-- Info box --}}
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-blue-800">
+                        <strong>Nota:</strong> Le tecnologie create qui saranno disponibili per la selezione nei
+                        progetti.
+                        Il "tipo" serve solo per organizzare meglio le tecnologie nell'elenco.
+                    </p>
                 </div>
 
                 {{-- Bottoni azione --}}
@@ -133,12 +149,12 @@
                     class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
             </div>
 
-            {{-- Filtro Categoria --}}
-            <select wire:model.live="categoryFilter"
+            {{-- Filtro per Tipo --}}
+            <select wire:model.live="technologyTypeFilter"
                 class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                <option value="">Tutte le categorie</option>
-                @foreach ($availableCategories as $cat)
-                    <option value="{{ $cat }}">{{ $cat }}</option>
+                <option value="">Tutti i tipi</option>
+                @foreach ($availableTechnologyTypes as $type)
+                    <option value="{{ $type }}">{{ $type }}</option>
                 @endforeach
             </select>
 
@@ -152,7 +168,7 @@
             </select>
         </div>
 
-        @if ($search || $categoryFilter)
+        @if ($search || $technologyTypeFilter)
             <div class="mt-3 flex items-center gap-2">
                 <span class="text-sm text-gray-500">Filtri attivi:</span>
                 @if ($search)
@@ -160,9 +176,9 @@
                         Ricerca: {{ $search }}
                     </span>
                 @endif
-                @if ($categoryFilter)
+                @if ($technologyTypeFilter)
                     <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                        Categoria: {{ $categoryFilter }}
+                        Tipo: {{ $technologyTypeFilter }}
                     </span>
                 @endif
                 <button wire:click="resetFilters" class="text-xs text-red-600 hover:text-red-700">
@@ -217,7 +233,7 @@
                     <th class="px-6 py-3 text-left">
                         <button wire:click="sortBy('category')"
                             class="text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                            Categoria
+                            Tipo
                             @if ($sortField === 'category')
                                 <svg class="w-3 h-3 inline" fill="currentColor" viewBox="0 0 20 20">
                                     @if ($sortDirection === 'asc')
@@ -269,7 +285,7 @@
                                     {{ $technology->category }}
                                 </span>
                             @else
-                                <span class="text-gray-400 text-sm">-</span>
+                                <span class="text-gray-400 text-sm italic">Non categorizzata</span>
                             @endif
                         </td>
                         <td class="px-6 py-4">
@@ -287,6 +303,9 @@
                             <span
                                 class="text-sm {{ $technology->projects_count > 0 ? 'text-green-600 font-semibold' : 'text-gray-500' }}">
                                 {{ $technology->projects_count }}
+                                @if ($technology->projects_count > 0)
+                                    <span class="text-xs text-gray-500">progetti</span>
+                                @endif
                             </span>
                         </td>
                         <td class="px-6 py-4 text-right text-sm">
@@ -328,14 +347,14 @@
     {{-- Flash Messages --}}
     @if (session()->has('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
-            class="fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg">
+            class="fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg z-50">
             {{ session('success') }}
         </div>
     @endif
 
     @if (session()->has('error'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
-            class="fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg">
+            class="fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50">
             {{ session('error') }}
         </div>
     @endif

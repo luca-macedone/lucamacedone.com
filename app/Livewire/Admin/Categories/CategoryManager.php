@@ -35,18 +35,22 @@ class CategoryManager extends Component
     // Drag & Drop
     public $isDragging = false;
 
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'description' => 'nullable|string|max:500',
-        'color' => 'required|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
-        'sort_order' => 'integer|min:0',
-    ];
+    protected function rules()
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'color' => ['required', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+            'sort_order' => 'integer|min:0',
+        ];
+    }
 
     protected $messages = [
         'name.required' => 'Il nome è obbligatorio.',
         'name.max' => 'Il nome non può superare i 255 caratteri.',
         'description.max' => 'La descrizione non può superare i 500 caratteri.',
-        'color.regex' => 'Il colore deve essere in formato esadecimale valido.',
+        'color.required' => 'Il colore è obbligatorio.',
+        'color.regex' => 'Il colore deve essere in formato esadecimale valido (es. #3B82F6).',
     ];
 
     /**
@@ -335,7 +339,7 @@ class CategoryManager extends Component
             $toCategory = ProjectCategory::findOrFail($toId);
 
             // Sposta tutti i progetti dalla categoria origine a quella destinazione
-            $fromCategory->projects()->each(function ($project) use ($toCategory) {
+            $fromCategory->projects()->each(function ($project) use ($toCategory, $fromCategory) {
                 $project->categories()->detach($fromCategory->id);
                 if (!$project->categories->contains($toCategory->id)) {
                     $project->categories()->attach($toCategory->id);
@@ -364,6 +368,6 @@ class CategoryManager extends Component
         return view('livewire.admin.categories.category-manager', [
             'categories' => $categories,
             'stats' => $stats,
-        ]);
+        ])->layout('layouts.app');
     }
 }
