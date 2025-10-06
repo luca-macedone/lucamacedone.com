@@ -82,6 +82,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/create', ProjectCreate::class)->name('create');
         Route::get('/{project}/edit', ProjectEdit::class)->name('edit');
 
+        Route::get('/{project}/gallery', \App\Livewire\Admin\Media\GalleryManager::class)->name('gallery');
+        Route::get('/{project}/seo', \App\Livewire\Admin\Seo\SeoManager::class)->name('seo');
+
         // API Routes per azioni AJAX
         Route::post('/{project}/toggle-status', [ProjectController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/{project}/toggle-featured', [ProjectController::class, 'toggleFeatured'])->name('toggle-featured');
@@ -94,37 +97,27 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/reorder', [ProjectController::class, 'reorder'])->name('reorder');
     });
 
-    // ===== GESTIONE CATEGORIE =====
+    // ===== GESTIONE GALLERIA IMMAGINI =====
+    Route::prefix('projects/{project}')->name('projects.')->group(function () {
+        Route::get('/gallery', \App\Livewire\Admin\Media\GalleryManager::class)->name('gallery');
+        Route::get('/seo', \App\Livewire\Admin\Seo\SeoManager::class)->name('seo');
+    });
+
+    // ===== GESTIONE CATEGORIE (aggiorna con Livewire component) =====
     Route::prefix('categories')->name('categories.')->group(function () {
         Route::get('/', [CategoryController::class, 'index'])->name('index');
-        Route::get('/create', [CategoryController::class, 'create'])->name('create');
-        Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
-        Route::post('/', [CategoryController::class, 'store'])->name('store');
-        Route::patch('/{category}', [CategoryController::class, 'update'])->name('update');
+        Route::get('/create', \App\Livewire\Admin\CategoryForm::class)->name('create');
+        Route::get('/{category}/edit', \App\Livewire\Admin\CategoryForm::class)->name('edit');
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
         Route::post('/reorder', [CategoryController::class, 'reorder'])->name('reorder');
     });
 
-    // ===== GESTIONE TECNOLOGIE =====
+    // ===== GESTIONE TECNOLOGIE (aggiorna con Livewire component) =====
     Route::prefix('technologies')->name('technologies.')->group(function () {
         Route::get('/', [TechnologyController::class, 'index'])->name('index');
-        Route::get('/create', [TechnologyController::class, 'create'])->name('create');
-        Route::get('/{technology}/edit', [TechnologyController::class, 'edit'])->name('edit');
-        Route::post('/', [TechnologyController::class, 'store'])->name('store');
-        Route::patch('/{technology}', [TechnologyController::class, 'update'])->name('update');
+        Route::get('/create', \App\Livewire\Admin\TechnologyForm::class)->name('create');
+        Route::get('/{technology}/edit', \App\Livewire\Admin\TechnologyForm::class)->name('edit');
         Route::delete('/{technology}', [TechnologyController::class, 'destroy'])->name('destroy');
-
-        // Import/Export
-        Route::get('/export', [TechnologyController::class, 'export'])->name('export');
-        Route::post('/import', [TechnologyController::class, 'import'])->name('import');
-    });
-
-    // ===== MEDIA LIBRARY =====
-    Route::prefix('media')->name('media.')->group(function () {
-        Route::get('/', [MediaController::class, 'index'])->name('index');
-        Route::post('/upload', [MediaController::class, 'upload'])->name('upload');
-        Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-delete', [MediaController::class, 'bulkDelete'])->name('bulk-delete');
     });
 
     // ===== IMPOSTAZIONI =====
