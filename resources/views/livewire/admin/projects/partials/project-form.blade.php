@@ -1,5 +1,3 @@
-{{-- resources/views/livewire/admin/projects/partials/project-form.blade.php --}}
-{{-- Form condiviso per creazione e modifica progetti --}}
 <form wire:submit.prevent="save" class="space-y-6">
     {{-- Informazioni Base --}}
     <div class="border-b pb-6">
@@ -7,26 +5,13 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             {{-- Titolo --}}
-            <div class="md:col-span-2">
+            <div>
                 <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
                     Titolo *
                 </label>
-                <input type="text" id="title" wire:model.debounce.500ms="{{ isset($project) ? 'title' : 'title' }}"
-                    wire:change="updatedTitle"
+                <input type="text" wire:model.lazy="title" id="title"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 @error('title')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Descrizione --}}
-            <div class="md:col-span-2">
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
-                    Descrizione *
-                </label>
-                <textarea id="description" wire:model="description" wire:change="updatedDescription" rows="3"
-                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
-                @error('description')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
@@ -36,9 +21,57 @@
                 <label for="client" class="block text-sm font-medium text-gray-700 mb-1">
                     Cliente
                 </label>
-                <input type="text" id="client" wire:model="client"
+                <input type="text" wire:model="client" id="client"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 @error('client')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- URL Progetto --}}
+            <div>
+                <label for="project_url" class="block text-sm font-medium text-gray-700 mb-1">
+                    URL Progetto
+                </label>
+                <input type="url" wire:model="project_url" id="project_url" placeholder="https://..."
+                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                @error('project_url')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- GitHub URL --}}
+            <div>
+                <label for="github_url" class="block text-sm font-medium text-gray-700 mb-1">
+                    Repository GitHub
+                </label>
+                <input type="url" wire:model="github_url" id="github_url" placeholder="https://github.com/..."
+                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                @error('github_url')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Data Inizio --}}
+            <div>
+                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">
+                    Data Inizio
+                </label>
+                <input type="date" wire:model="start_date" id="start_date"
+                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                @error('start_date')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Data Fine --}}
+            <div>
+                <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">
+                    Data Fine
+                </label>
+                <input type="date" wire:model="end_date" id="end_date"
+                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                @error('end_date')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
@@ -46,9 +79,9 @@
             {{-- Status --}}
             <div>
                 <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
-                    Stato
+                    Stato *
                 </label>
-                <select id="status" wire:model="status"
+                <select wire:model="status" id="status"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     <option value="draft">Bozza</option>
                     <option value="published">Pubblicato</option>
@@ -59,90 +92,67 @@
                 @enderror
             </div>
 
-            {{-- URL Progetto --}}
-            <div>
-                <label for="project_url" class="block text-sm font-medium text-gray-700 mb-1">
-                    URL Progetto
-                </label>
-                <input type="url" id="project_url" wire:model="project_url" placeholder="https://example.com"
-                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                @error('project_url')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- GitHub URL --}}
-            <div>
-                <label for="github_url" class="block text-sm font-medium text-gray-700 mb-1">
-                    GitHub URL
-                </label>
-                <input type="url" id="github_url" wire:model="github_url" placeholder="https://github.com/user/repo"
-                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                @error('github_url')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Date --}}
-            <div>
-                <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">
-                    Data Inizio
-                </label>
-                <input type="date" id="start_date" wire:model="start_date"
-                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                @error('start_date')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">
-                    Data Fine
-                </label>
-                <input type="date" id="end_date" wire:model="end_date"
-                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                @error('end_date')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Opzioni --}}
-            <div class="flex items-center space-x-6">
-                <label class="flex items-center">
-                    <input type="checkbox" wire:model="is_featured"
-                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
-                    <span class="ml-2 text-sm text-gray-700">Progetto in Evidenza</span>
-                </label>
-            </div>
-
+            {{-- Sort Order --}}
             <div>
                 <label for="sort_order" class="block text-sm font-medium text-gray-700 mb-1">
-                    Ordine di Visualizzazione
+                    Ordine
                 </label>
-                <input type="number" id="sort_order" wire:model="sort_order" min="0"
+                <input type="number" wire:model="sort_order" id="sort_order" min="0"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 @error('sort_order')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+
+            {{-- Is Featured --}}
+            <div class="md:col-span-2">
+                <label class="flex items-center">
+                    <input type="checkbox" wire:model="is_featured"
+                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                    <span class="ml-2 text-sm text-gray-700">Progetto in evidenza</span>
+                </label>
+            </div>
+        </div>
+
+        {{-- Descrizione --}}
+        <div class="mt-6">
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
+                Descrizione *
+            </label>
+            <textarea wire:model.lazy="description" id="description" rows="3"
+                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+            @error('description')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        {{-- Contenuto --}}
+        <div class="mt-6">
+            <label for="content" class="block text-sm font-medium text-gray-700 mb-1">
+                Contenuto Completo
+            </label>
+            <textarea wire:model="content" id="content" rows="8"
+                class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+            @error('content')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
-    {{-- Immagini --}}
+    {{-- Media --}}
     <div class="border-b pb-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Immagini</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Media</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             {{-- Featured Image --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Immagine Principale
+                    Immagine in Evidenza
                 </label>
 
-                {{-- Mostra immagine esistente solo in modalità edit --}}
-                @if (isset($project) && isset($existing_featured_image) && $existing_featured_image)
+                @if (isset($existing_featured_image) && $existing_featured_image)
                     <div class="mb-4">
-                        <img src="{{ asset('storage/' . $existing_featured_image) }}" alt="Featured image"
+                        <img src="{{ Storage::url($existing_featured_image) }}" alt="Featured image"
                             class="w-full h-48 object-cover rounded-md">
                         <p class="mt-1 text-xs text-gray-500">Immagine attuale</p>
                     </div>
@@ -151,7 +161,6 @@
                 <input type="file" wire:model="featured_image" accept="image/*"
                     class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
 
-                {{-- Preview nuova immagine --}}
                 @if ($featured_image)
                     <div class="mt-2">
                         <img src="{{ $featured_image->temporaryUrl() }}" alt="Preview"
@@ -171,7 +180,6 @@
                     Galleria Immagini
                 </label>
 
-                {{-- Mostra immagini esistenti solo in modalità edit --}}
                 @if (isset($project) && isset($existing_gallery_images) && count($existing_gallery_images) > 0)
                     <div class="grid grid-cols-3 gap-2 mb-4">
                         @foreach ($existing_gallery_images as $image)
@@ -191,12 +199,10 @@
                     </div>
                 @endif
 
-                {{-- Upload nuove immagini --}}
                 <input type="file" wire:model="{{ isset($project) ? 'new_gallery_images' : 'gallery_images' }}"
                     accept="image/*" multiple
                     class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
 
-                {{-- Preview nuove immagini per creazione --}}
                 @if (!isset($project) && $gallery_images)
                     <div class="grid grid-cols-3 gap-2 mt-2">
                         @foreach ($gallery_images as $index => $image)
@@ -215,7 +221,6 @@
                     </div>
                 @endif
 
-                {{-- Preview nuove immagini per modifica --}}
                 @if (isset($project) && isset($new_gallery_images) && $new_gallery_images)
                     <div class="grid grid-cols-3 gap-2 mt-2">
                         @foreach ($new_gallery_images as $index => $image)
@@ -274,15 +279,13 @@
                     Tecnologie
                 </label>
                 <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
-                    @foreach ($technologies as $technology)
+                    @foreach ($technologies as $tech)
                         <label class="flex items-center">
-                            <input type="checkbox" wire:model="selected_technologies" value="{{ $technology->id }}"
+                            <input type="checkbox" wire:model="selected_technologies" value="{{ $tech->id }}"
                                 class="rounded border-gray-300 text-blue-600">
                             <span class="ml-2 text-sm text-gray-700">
-                                {{ $technology->name }}
-                                @if ($technology->category)
-                                    <span class="text-xs text-gray-500">({{ $technology->category }})</span>
-                                @endif
+                                {{ $tech->name }}
+                                <span class="text-xs text-gray-500">({{ $tech->category }})</span>
                             </span>
                         </label>
                     @endforeach
@@ -302,11 +305,9 @@
             {{-- Meta Title --}}
             <div>
                 <label for="meta_title" class="block text-sm font-medium text-gray-700 mb-1">
-                    Meta Title
-                    <span class="text-xs text-gray-500">(max 60 caratteri)</span>
+                    Meta Title (max 60 caratteri)
                 </label>
-                <input type="text" id="meta_title" wire:model="meta_title" maxlength="60"
-                    placeholder="Lascia vuoto per generare automaticamente dal titolo"
+                <input type="text" wire:model="meta_title" id="meta_title" maxlength="60"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                 <p class="mt-1 text-xs text-gray-500">
                     {{ strlen($meta_title) }}/60 caratteri
@@ -319,11 +320,9 @@
             {{-- Meta Description --}}
             <div>
                 <label for="meta_description" class="block text-sm font-medium text-gray-700 mb-1">
-                    Meta Description
-                    <span class="text-xs text-gray-500">(max 160 caratteri)</span>
+                    Meta Description (max 160 caratteri)
                 </label>
-                <textarea id="meta_description" wire:model="meta_description" rows="2" maxlength="160"
-                    placeholder="Lascia vuoto per generare automaticamente dalla descrizione"
+                <textarea wire:model="meta_description" id="meta_description" rows="2" maxlength="160"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
                 <p class="mt-1 text-xs text-gray-500">
                     {{ strlen($meta_description) }}/160 caratteri
@@ -336,30 +335,46 @@
             {{-- Meta Keywords --}}
             <div>
                 <label for="meta_keywords" class="block text-sm font-medium text-gray-700 mb-1">
-                    Meta Keywords
-                    <span class="text-xs text-gray-500">(separati da virgola)</span>
+                    Keywords (separate da virgola)
                 </label>
-                <input type="text" id="meta_keywords" wire:model="meta_keywords"
-                    placeholder="parola1, parola2, parola3"
+                <input type="text" wire:model="meta_keywords" id="meta_keywords"
+                    placeholder="web development, laravel, php"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                <p class="mt-1 text-xs text-gray-500">Separati da virgola</p>
                 @error('meta_keywords')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
-        </div>
-    </div>
 
-    {{-- Content Editor --}}
-    <div class="border-b pb-6">
-        <label for="content" class="block text-sm font-medium text-gray-700 mb-1">
-            Contenuto Completo
-        </label>
-        <textarea id="content" wire:model="content" rows="10" placeholder="Descrizione dettagliata del progetto..."
-            class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
-        @error('content')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-        @enderror
+            {{-- OG Image --}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Open Graph Image
+                </label>
+
+                @if (isset($existing_og_image) && $existing_og_image)
+                    <div class="mb-4">
+                        <img src="{{ Storage::url($existing_og_image) }}" alt="OG image"
+                            class="w-48 h-24 object-cover rounded-md">
+                        <p class="mt-1 text-xs text-gray-500">Immagine OG attuale</p>
+                    </div>
+                @endif
+
+                <input type="file" wire:model="og_image" accept="image/*"
+                    class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+
+                @if ($og_image)
+                    <div class="mt-2">
+                        <img src="{{ $og_image->temporaryUrl() }}" alt="Preview"
+                            class="w-48 h-24 object-cover rounded-md">
+                        <p class="mt-1 text-xs text-gray-500">Nuova immagine OG (anteprima)</p>
+                    </div>
+                @endif
+
+                @error('og_image')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
     </div>
 
     {{-- Azioni --}}
@@ -372,42 +387,36 @@
             @if (isset($project))
                 {{-- Modalità modifica --}}
                 <button type="button" wire:click="toggleStatus"
-                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                    {{ $status === 'published' ? 'Imposta come Bozza' : 'Pubblica' }}
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    {{ $status === 'published' ? 'Metti in Bozza' : 'Pubblica' }}
                 </button>
 
-                <button type="submit"
-                    class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Aggiorna Progetto
+                <button type="button" wire:click="toggleFeatured"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    {{ $is_featured ? 'Rimuovi da Evidenza' : 'Metti in Evidenza' }}
+                </button>
+
+                <button type="button" wire:click="saveAndClose"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Salva e Chiudi
                 </button>
             @else
                 {{-- Modalità creazione --}}
                 <button type="button" wire:click="saveAsDraft"
-                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                     Salva come Bozza
                 </button>
 
                 <button type="button" wire:click="saveAndPublish"
-                    class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                     Salva e Pubblica
                 </button>
             @endif
+
+            <button type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Salva
+            </button>
         </div>
     </div>
 </form>
-
-{{-- Loading indicator --}}
-<div wire:loading wire:target="save,saveAsDraft,saveAndPublish,featured_image,gallery_images,new_gallery_images"
-    class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6">
-        <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
-            viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-            </circle>
-            <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
-        </svg>
-        <p class="mt-4 text-sm text-gray-600">Salvataggio in corso...</p>
-    </div>
-</div>

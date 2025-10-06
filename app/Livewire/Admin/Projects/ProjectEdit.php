@@ -114,7 +114,7 @@ class ProjectEdit extends Component
         $this->selected_categories = $project->categories->pluck('id')->toArray();
         $this->selected_technologies = $project->technologies->pluck('id')->toArray();
 
-        // SEO data - CORREZIONE qui per keywords_string
+        // SEO data
         if ($project->seo) {
             $this->meta_title = $project->seo->meta_title;
             $this->meta_description = $project->seo->meta_description;
@@ -126,54 +126,30 @@ class ProjectEdit extends Component
                 } else {
                     // Se è salvato come JSON string nel database
                     $decoded = json_decode($project->seo->meta_keywords, true);
-                    if (is_array($decoded)) {
-                        $this->meta_keywords = implode(', ', $decoded);
-                    } else {
-                        $this->meta_keywords = $project->seo->meta_keywords;
-                    }
+                    $this->meta_keywords = is_array($decoded) ? implode(', ', $decoded) : '';
                 }
             }
 
             $this->existing_og_image = $project->seo->og_image;
-        } else {
-            // Se non esistono dati SEO, usa valori di default
-            $this->meta_title = Str::limit($project->title, 60);
-            $this->meta_description = Str::limit(strip_tags($project->description), 160);
         }
     }
 
-    public function updatedTitle()
+    // FIX: Aggiunto parametro $value mancante
+    public function updatedTitle($value)
     {
-        // Auto-genera meta_title se vuoto
-        if (empty($this->meta_title)) {
-            $this->meta_title = Str::limit($this->title, 60);
+        // Auto-genera meta_title se vuoto e il titolo non è vuoto
+        if (empty($this->meta_title) && !empty($value)) {
+            $this->meta_title = Str::limit($value, 60);
         }
     }
 
-    public function updatedDescription()
+    // FIX: Aggiunto parametro $value mancante
+    public function updatedDescription($value)
     {
-        // Auto-genera meta_description se vuota
-        if (empty($this->meta_description)) {
-            $this->meta_description = Str::limit(strip_tags($this->description), 160);
+        // Auto-genera meta_description se vuota e la descrizione non è vuota
+        if (empty($this->meta_description) && !empty($value)) {
+            $this->meta_description = Str::limit(strip_tags($value), 160);
         }
-    }
-
-    public function removeExistingGalleryImage($imageId)
-    {
-        // Aggiungi l'ID dell'immagine da eliminare
-        $this->images_to_delete[] = $imageId;
-
-        // Rimuovi dall'array delle immagini esistenti per l'interfaccia
-        $this->existing_gallery_images = array_filter(
-            $this->existing_gallery_images,
-            fn($img) => $img['id'] != $imageId
-        );
-    }
-
-    public function removeNewGalleryImage($index)
-    {
-        unset($this->new_gallery_images[$index]);
-        $this->new_gallery_images = array_values($this->new_gallery_images);
     }
 
     public function save()
@@ -183,19 +159,21 @@ class ProjectEdit extends Component
         try {
             DB::beginTransaction();
 
-            // Aggiorna i campi base del progetto
-            $this->project->title = $this->title;
-            $this->project->slug = Project::generateUniqueSlug($this->title, $this->project->id);
-            $this->project->description = $this->description;
-            $this->project->content = $this->content;
-            $this->project->client = $this->client;
-            $this->project->project_url = $this->project_url;
-            $this->project->github_url = $this->github_url;
-            $this->project->start_date = $this->start_date ?: null;
-            $this->project->end_date = $this->end_date ?: null;
-            $this->project->status = $this->status;
-            $this->project->is_featured = $this->is_featured;
-            $this->project->sort_order = $this->sort_order;
+            // Aggiorna i dati base del progetto
+            $this->project->update([
+                'title' => $this->title,
+                'slug' => $this->project->slug, // Mantieni lo slug esistente o genera nuovo se il titolo è cambiato
+                'description' => $this->description,
+                'content' => $this->content,
+                'client' => $this->client,
+                'project_url' => $this->project_url,
+                'github_url' => $this->github_url,
+                'start_date' => $this->start_date ?: null,
+                'end_date' => $this->end_date ?: null,
+                'status' => $this->status,
+                'is_featured' => $this->is_featured,
+                'sort_order' => $this->sort_order,
+            ]);
 
             // Gestisci featured image
             if ($this->featured_image) {
@@ -203,11 +181,9 @@ class ProjectEdit extends Component
                 if ($this->existing_featured_image) {
                     Storage::disk('public')->delete($this->existing_featured_image);
                 }
-                // Salva nuova immagine
                 $this->project->featured_image = $this->featured_image->store('projects', 'public');
+                $this->project->save();
             }
-
-            $this->project->save();
 
             // Gestisci eliminazione immagini della galleria
             if (!empty($this->images_to_delete)) {
@@ -277,7 +253,7 @@ class ProjectEdit extends Component
                 $seoData
             );
 
-            // Sincronizza relazioni many-to-many
+            // Sincronizza relazioni many-to-many con timestamps
             $this->project->categories()->sync($this->selected_categories);
             $this->project->technologies()->sync($this->selected_technologies);
 
@@ -323,6 +299,20 @@ class ProjectEdit extends Component
     {
         $this->is_featured = !$this->is_featured;
         $this->save();
+    }
+
+    public function removeExistingGalleryImage($imageId)
+    {
+        $this->images_to_delete[] = $imageId;
+        $this->existing_gallery_images = array_filter($this->existing_gallery_images, function ($img) use ($imageId) {
+            return $img['id'] !== $imageId;
+        });
+    }
+
+    public function removeNewGalleryImage($index)
+    {
+        unset($this->new_gallery_images[$index]);
+        $this->new_gallery_images = array_values($this->new_gallery_images);
     }
 
     public function render()

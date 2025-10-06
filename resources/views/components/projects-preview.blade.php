@@ -39,14 +39,14 @@
             <ul class="grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-4 w-full py-5">
                 @foreach ($featuredProjects as $project)
                     <li
-                        class="rounded-lg border border-background-contrast overflow-hidden max-w-[550px] lg:max-w-full bg-background-contrast hover:border-muted hover:shadow-lg transition-shadow duration-300">
+                        class="rounded-lg border border-background-contrast overflow-hidden max-w-[550px] lg:max-w-full bg-background-contrast hover:border-muted hover:shadow-lg transition-shadow duration-300 group">
                         <a href="{{ route('portfolio.show', $project->slug) }}" class="block">
                             {{-- Immagine del progetto --}}
                             <div
                                 class="max-h-[300px] min-h-[300px] lg:max-h-[200px] lg:min-h-[200px] w-full overflow-hidden bg-gray-100">
                                 @if ($project->featured_image)
                                     <img src="{{ Storage::url($project->featured_image) }}" alt="{{ $project->title }}"
-                                        class="object-cover w-full h-full hover:scale-105 transition-transform duration-300">
+                                        class="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500">
                                 @else
                                     <div
                                         class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">

@@ -80,23 +80,25 @@ class ProjectCreate extends Component
 
     public function mount()
     {
-        // Inizializza con valori predefiniti se necessario
+        // Inizializza con valori predefiniti
         $this->sort_order = Project::max('sort_order') + 1 ?? 0;
     }
 
+    // FIX: Aggiunto parametro $value mancante
     public function updatedTitle($value)
     {
-        // Auto-genera meta_title se vuoto
+        // Auto-genera meta_title se vuoto e il titolo non è vuoto
         if (empty($this->meta_title) && !empty($value)) {
             $this->meta_title = Str::limit($value, 60);
         }
     }
 
-    public function updatedDescription()
+    // FIX: Aggiunto parametro $value mancante
+    public function updatedDescription($value)
     {
-        // Auto-genera meta_description se vuota
-        if (empty($this->meta_description)) {
-            $this->meta_description = Str::limit(strip_tags($this->description), 160);
+        // Auto-genera meta_description se vuota e la descrizione non è vuota
+        if (empty($this->meta_description) && !empty($value)) {
+            $this->meta_description = Str::limit(strip_tags($value), 160);
         }
     }
 
@@ -108,26 +110,23 @@ class ProjectCreate extends Component
             DB::beginTransaction();
 
             // Crea il progetto base
-            $project = new Project();
-            $project->title = $this->title;
-            $project->slug = Project::generateUniqueSlug($this->title);
-            $project->description = $this->description;
-            $project->content = $this->content;
-            $project->client = $this->client;
-            $project->project_url = $this->project_url;
-            $project->github_url = $this->github_url;
-            $project->start_date = $this->start_date ?: null;
-            $project->end_date = $this->end_date ?: null;
-            $project->status = $this->status;
-            $project->is_featured = $this->is_featured;
-            $project->sort_order = $this->sort_order;
-
-            // Upload featured image
-            if ($this->featured_image) {
-                $project->featured_image = $this->featured_image->store('projects', 'public');
-            }
-
-            $project->save();
+            $project = Project::create([
+                'title' => $this->title,
+                'slug' => Project::generateUniqueSlug($this->title),
+                'description' => $this->description,
+                'content' => $this->content,
+                'client' => $this->client,
+                'project_url' => $this->project_url,
+                'github_url' => $this->github_url,
+                'start_date' => $this->start_date ?: null,
+                'end_date' => $this->end_date ?: null,
+                'status' => $this->status,
+                'is_featured' => $this->is_featured,
+                'sort_order' => $this->sort_order,
+                'featured_image' => $this->featured_image
+                    ? $this->featured_image->store('projects', 'public')
+                    : null,
+            ]);
 
             // Gestisci gallery images nella tabella project_images
             if (!empty($this->gallery_images)) {
@@ -170,7 +169,7 @@ class ProjectCreate extends Component
                 ProjectSeo::create($seoData);
             }
 
-            // Sincronizza relazioni many-to-many
+            // Sincronizza relazioni many-to-many con timestamps
             if (!empty($this->selected_categories)) {
                 $project->categories()->sync($this->selected_categories);
             }
