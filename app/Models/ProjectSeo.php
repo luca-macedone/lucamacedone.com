@@ -43,38 +43,7 @@ class ProjectSeo extends Model
     }
 
     /**
-     * Genera meta tags HTML
-     */
-    public function generateMetaTags(): string
-    {
-        $tags = [];
-
-        if ($this->meta_title) {
-            $tags[] = '<title>' . e($this->meta_title) . '</title>';
-            $tags[] = '<meta property="og:title" content="' . e($this->meta_title) . '">';
-        }
-
-        if ($this->meta_description) {
-            $tags[] = '<meta name="description" content="' . e($this->meta_description) . '">';
-            $tags[] = '<meta property="og:description" content="' . e($this->meta_description) . '">';
-        }
-
-        if ($this->meta_keywords && count($this->meta_keywords) > 0) {
-            $keywords = is_array($this->meta_keywords)
-                ? implode(', ', $this->meta_keywords)
-                : $this->meta_keywords;
-            $tags[] = '<meta name="keywords" content="' . e($keywords) . '">';
-        }
-
-        if ($this->og_image) {
-            $tags[] = '<meta property="og:image" content="' . $this->og_image_url . '">';
-        }
-
-        return implode("\n    ", $tags);
-    }
-
-    /**
-     * Ottieni keywords come stringa
+     * Ottieni keywords come stringa (per form edit)
      */
     public function getKeywordsStringAttribute()
     {

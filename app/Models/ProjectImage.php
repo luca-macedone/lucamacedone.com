@@ -1,5 +1,4 @@
 <?php
-// File: app/Models/ProjectImage.php
 
 namespace App\Models;
 
@@ -19,7 +18,7 @@ class ProjectImage extends Model
         'alt_text',
         'caption',
         'sort_order',
-        'type'
+        'type',
     ];
 
     protected $casts = [
@@ -33,10 +32,16 @@ class ProjectImage extends Model
     {
         parent::boot();
 
+        // Quando un'immagine viene eliminata, elimina anche il file fisico
         static::deleting(function ($image) {
-            // Elimina il file fisico quando il record viene eliminato
-            if ($image->filename && Storage::disk('public')->exists($image->filename)) {
+            if (Storage::disk('public')->exists($image->filename)) {
                 Storage::disk('public')->delete($image->filename);
+            }
+
+            // Elimina anche la thumbnail se esiste
+            $thumbPath = str_replace('projects/', 'projects/thumbs/', $image->filename);
+            if (Storage::disk('public')->exists($thumbPath)) {
+                Storage::disk('public')->delete($thumbPath);
             }
         });
     }
@@ -50,44 +55,41 @@ class ProjectImage extends Model
     }
 
     /**
-     * Scope per tipo di immagine
+     * Ottieni l'URL completo dell'immagine
+     */
+    public function getUrlAttribute()
+    {
+        return asset('storage/' . $this->filename);
+    }
+
+    /**
+     * Ottieni l'URL della thumbnail
+     */
+    public function getThumbUrlAttribute()
+    {
+        $thumbPath = str_replace('projects/', 'projects/thumbs/', $this->filename);
+
+        if (Storage::disk('public')->exists($thumbPath)) {
+            return asset('storage/' . $thumbPath);
+        }
+
+        // Se la thumbnail non esiste, ritorna l'immagine originale
+        return $this->url;
+    }
+
+    /**
+     * Scope per ottenere solo le immagini della galleria
      */
     public function scopeGallery($query)
     {
         return $query->where('type', 'gallery');
     }
 
-    public function scopeFeatured($query)
-    {
-        return $query->where('type', 'featured');
-    }
-
-    public function scopeThumbnail($query)
-    {
-        return $query->where('type', 'thumbnail');
-    }
-
     /**
-     * Ottieni l'URL completo dell'immagine
+     * Scope per ordinamento
      */
-    public function getUrlAttribute()
+    public function scopeOrdered($query)
     {
-        return $this->filename
-            ? asset('storage/' . $this->filename)
-            : asset('images/placeholder.jpg');
-    }
-
-    /**
-     * Ottieni le dimensioni del file in formato leggibile
-     */
-    public function getFileSizeAttribute()
-    {
-        if ($this->filename && Storage::disk('public')->exists($this->filename)) {
-            $bytes = Storage::disk('public')->size($this->filename);
-            $units = ['B', 'KB', 'MB', 'GB'];
-            $factor = floor((strlen($bytes) - 1) / 3);
-            return sprintf("%.2f", $bytes / pow(1024, $factor)) . ' ' . $units[$factor];
-        }
-        return '0 B';
+        return $query->orderBy('sort_order')->orderBy('created_at');
     }
 }

@@ -12,6 +12,7 @@ use Livewire\WithFileUploads;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ProjectEdit extends Component
 {
@@ -113,11 +114,26 @@ class ProjectEdit extends Component
         $this->selected_categories = $project->categories->pluck('id')->toArray();
         $this->selected_technologies = $project->technologies->pluck('id')->toArray();
 
-        // SEO data
+        // SEO data - CORREZIONE qui per keywords_string
         if ($project->seo) {
             $this->meta_title = $project->seo->meta_title;
             $this->meta_description = $project->seo->meta_description;
-            $this->meta_keywords = $project->seo->keywords_string; // Converte array in stringa
+
+            // Gestione corretta delle keywords
+            if ($project->seo->meta_keywords) {
+                if (is_array($project->seo->meta_keywords)) {
+                    $this->meta_keywords = implode(', ', $project->seo->meta_keywords);
+                } else {
+                    // Se è salvato come JSON string nel database
+                    $decoded = json_decode($project->seo->meta_keywords, true);
+                    if (is_array($decoded)) {
+                        $this->meta_keywords = implode(', ', $decoded);
+                    } else {
+                        $this->meta_keywords = $project->seo->meta_keywords;
+                    }
+                }
+            }
+
             $this->existing_og_image = $project->seo->og_image;
         } else {
             // Se non esistono dati SEO, usa valori di default
@@ -169,12 +185,7 @@ class ProjectEdit extends Component
 
             // Aggiorna i campi base del progetto
             $this->project->title = $this->title;
-
-            // Aggiorna slug solo se il titolo è cambiato
-            if ($this->project->isDirty('title')) {
-                $this->project->slug = $this->generateUniqueSlug($this->title, $this->project->id);
-            }
-
+            $this->project->slug = Project::generateUniqueSlug($this->title, $this->project->id);
             $this->project->description = $this->description;
             $this->project->content = $this->content;
             $this->project->client = $this->client;
@@ -236,14 +247,16 @@ class ProjectEdit extends Component
 
             // Gestisci dati SEO
             $seoData = [
-                'meta_title' => $this->meta_title ?: Str::limit($this->title, 60),
-                'meta_description' => $this->meta_description ?: Str::limit(strip_tags($this->description), 160),
-                'meta_keywords' => null,
+                'meta_title' => $this->meta_title ?: null,
+                'meta_description' => $this->meta_description ?: null,
             ];
 
-            // Converti keywords string in array
+            // Converti keywords string in array JSON
             if ($this->meta_keywords) {
-                $seoData['meta_keywords'] = json_encode(array_map('trim', explode(',', $this->meta_keywords)));
+                $keywords = array_map('trim', explode(',', $this->meta_keywords));
+                $seoData['meta_keywords'] = json_encode($keywords);
+            } else {
+                $seoData['meta_keywords'] = null;
             }
 
             // Gestisci OG image
@@ -253,9 +266,9 @@ class ProjectEdit extends Component
                     Storage::disk('public')->delete($this->existing_og_image);
                 }
                 $seoData['og_image'] = $this->og_image->store('projects/og', 'public');
-            } elseif (!$this->existing_og_image && $this->project->featured_image) {
-                // Usa featured image come fallback per OG image
-                $seoData['og_image'] = $this->project->featured_image;
+            } else {
+                // Mantieni l'esistente o usa featured come fallback
+                $seoData['og_image'] = $this->existing_og_image ?: $this->project->featured_image;
             }
 
             // Crea o aggiorna record SEO
@@ -282,6 +295,11 @@ class ProjectEdit extends Component
             session()->flash('message', 'Progetto aggiornato con successo!');
         } catch (\Exception $e) {
             DB::rollback();
+
+            Log::error('Errore aggiornamento progetto: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
             session()->flash('error', 'Errore nell\'aggiornamento: ' . $e->getMessage());
         }
     }
@@ -305,43 +323,6 @@ class ProjectEdit extends Component
     {
         $this->is_featured = !$this->is_featured;
         $this->save();
-    }
-
-    private function generateUniqueSlug($title, $excludeId = null)
-    {
-        $slug = Str::slug($title);
-        $originalSlug = $slug;
-        $counter = 1;
-
-        $query = Project::where('slug', $slug);
-        if ($excludeId) {
-            $query->where('id', '!=', $excludeId);
-        }
-
-        while ($query->exists()) {
-            $slug = $originalSlug . '-' . $counter;
-            $counter++;
-
-            $query = Project::where('slug', $slug);
-            if ($excludeId) {
-                $query->where('id', '!=', $excludeId);
-            }
-        }
-
-        return $slug;
-    }
-
-    public function reorderGalleryImages($orderedIds)
-    {
-        // Riordina le immagini della galleria
-        foreach ($orderedIds as $order => $imageId) {
-            ProjectImage::where('id', $imageId)
-                ->where('project_id', $this->project->id)
-                ->update(['sort_order' => $order]);
-        }
-
-        // Ricarica le immagini nell'ordine aggiornato
-        $this->existing_gallery_images = $this->project->fresh()->galleryImages->toArray();
     }
 
     public function render()
