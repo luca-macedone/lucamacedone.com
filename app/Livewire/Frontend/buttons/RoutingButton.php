@@ -1,88 +1,96 @@
 <?php
 
-namespace App\Livewire\Frontend\Buttons;
+namespace app\Livewire\Frontend\buttons;
 
 use Livewire\Component;
-use Livewire\Attributes\Validate;
-use Illuminate\Support\Facades\Route;
 
 class RoutingButton extends Component
 {
-    #[Validate('required|string')]
     public string $route;
-
-    #[Validate('nullable|array')]
-    public array $parameters = [];
-
-    #[Validate('required|string')]
     public string $label;
-
-    #[Validate('nullable|string')]
-    public string $style = 'primary'; // primary, secondary, danger
-
-    #[Validate('nullable|boolean')]
-    public bool $navigate = true; // Usa wire:navigate per SPA experience
-
-    #[Validate('nullable|string')]
-    public string $icon = '';
+    public string $style = 'primary';
+    public bool $navigate = false;
+    public ?string $anchor = null;
+    public array $routeParams = [];
+    public string $target = '_self';
+    public array $classes = [];
 
     /**
-     * Gestisce la navigazione verso la route specificata
+     * Mount the component with initial properties
      */
-    public function handleNavigation(): mixed
-    {
-        try {
-            // Verifica che la route esista
-            if (!Route::has($this->route)) {
-                throw new \Exception("Route '{$this->route}' non trovata");
-            }
+    public function mount(
+        string $route,
+        string $label,
+        string $style = 'primary',
+        bool $navigate = false,
+        ?string $anchor = null,
+        array $routeParams = [],
+        string $target = '_self'
+    ) {
+        $this->route = $route;
+        $this->label = $label;
+        $this->style = $style;
+        $this->navigate = $navigate;
+        $this->anchor = $anchor;
+        $this->routeParams = $routeParams;
+        $this->target = $target;
 
-            // Costruisce l'URL con i parametri
-            $url = route($this->route, $this->parameters);
-
-            // Redirect standard senza wire:navigate per evitare errori
-            // Se vuoi usare wire:navigate, deve essere installato Alpine Navigate plugin
-            return $this->redirect($url);
-        } catch (\Exception $e) {
-            // Emette un evento di errore che può essere gestito dal componente padre
-            $this->dispatch('routing-error', message: $e->getMessage());
-
-            // Log dell'errore
-            logger()->error('RoutingButton error: ' . $e->getMessage(), [
-                'route' => $this->route,
-                'parameters' => $this->parameters
-            ]);
-        }
-
-        return null;
+        $this->setStyleClasses();
     }
 
     /**
-     * Determina le classi CSS in base allo stile
+     * Set CSS classes based on style
      */
-    public function getButtonClasses(): string
+    private function setStyleClasses(): void
     {
-        $baseClasses = 'flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-full font-semibold text-md tracking-widest transition ease-in-out duration-200 border';
+        $baseClasses = 'inline-flex items-center justify-center px-6 py-3 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105';
 
-        $styleClasses = match ($this->style) {
-            'primary' => 'bg-primary text-background-contrast dark:text-text hover:brightness-110 border-transparent',
-            'secondary' => 'bg-secondary border-transparent text-background-contrast dark:text-text hover:brightness-110',
-            'accent' => 'bg-accent border-transparent text-background-contrast dark:text-text hover:brightness-110',
-            'discreet-primary' => 'bg-transparent text-text hover:text-primary dark:hover:text-primary border-primary hover:bg-background-contrast',
-            'discreet-secondary' => 'bg-transparent border-secondary text-text hover:text-secondary dark:hover:text-secondary hover:bg-background-contrast',
-            'discreet-accent' => 'bg-transparent border-accent text-text hover:text-accent dark:hover:text-accent hover:bg-background-contrast',
+        $styleVariants = [
+            'primary' => 'bg-primary text-white hover:bg-primary-dark',
+            'secondary' => 'bg-secondary text-white hover:bg-secondary-dark',
+            'accent' => 'bg-accent text-background-contrast dark:text-text hover:bg-accent-dark',
+            'outline' => 'border-2 border-accent text-accent hover:bg-accent hover:text-white',
+            'ghost' => 'text-text hover:bg-background-contrast hover:text-accent',
+            'danger' => 'bg-red-600 text-white hover:bg-red-700',
+            'success' => 'bg-green-600 text-white hover:bg-green-700',
+        ];
 
-            'danger' => 'bg-red-600 border border-transparent text-white hover:bg-red-500 active:bg-red-700',
-            default => 'bg-gray-200 dark:bg-gray-800 border border-transparent text-black hover:bg-gray-100 dark:hover:bg-gray-600 hover:border-black'
-        };
+        $this->classes = array_merge(
+            explode(' ', $baseClasses),
+            explode(' ', $styleVariants[$this->style] ?? $styleVariants['primary'])
+        );
+    }
 
-        return $baseClasses . ' ' . $styleClasses;
+    /**
+     * Get the full URL with anchor if provided
+     */
+    public function getFullUrl(): string
+    {
+        $url = route($this->route, $this->routeParams);
+
+        if ($this->anchor) {
+            // Remove any existing hash first
+            $url = strtok($url, '#');
+            // Add the anchor
+            $url .= '#' . ltrim($this->anchor, '#');
+        }
+
+        return $url;
+    }
+
+    /**
+     * Handle click event
+     */
+    public function handleClick(): void
+    {
+        if ($this->navigate) {
+            // Use Livewire navigation with anchor support
+            $this->redirect($this->getFullUrl());
+        }
     }
 
     public function render()
     {
-        return view('livewire.frontend.buttons.routing-button', [
-            'buttonClasses' => $this->getButtonClasses()
-        ]);
+        return view('livewire.frontend.buttons.routing-button');
     }
 }

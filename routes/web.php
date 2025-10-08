@@ -125,16 +125,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     });
 });
 
-/*
-|--------------------------------------------------------------------------
-| API ROUTES (se necessarie)
-|--------------------------------------------------------------------------
-*/
+// /*
+// |--------------------------------------------------------------------------
+// | API ROUTES (se necessarie)
+// |--------------------------------------------------------------------------
+// */
 
-Route::prefix('api')->middleware('auth:sanctum')->group(function () {
-    // Route per API se necessarie (es. mobile app)
-    Route::get('/projects', [ProjectController::class, 'apiIndex']);
-    Route::get('/projects/{project}', [ProjectController::class, 'apiShow']);
-});
+// Route::prefix('api')->middleware('auth:sanctum')->group(function () {
+//     // Route per API se necessarie (es. mobile app)
+//     Route::get('/projects', [ProjectController::class, 'apiIndex']);
+//     Route::get('/projects/{project}', [ProjectController::class, 'apiShow']);
+// });
 
 require __DIR__ . '/auth.php';

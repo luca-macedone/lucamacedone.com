@@ -5,7 +5,7 @@
         <!-- Hero Section -->
         <x-about-me />
         <!-- Hero Section -->
-        <x-skills-and-techs />
+        @livewire('frontend.skills-and-techs')
         <!-- Hero Section -->
         <x-projects-preview :featuredProjects="$featuredProjects" />
         <!-- Hero Section -->

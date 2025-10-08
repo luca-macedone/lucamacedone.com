@@ -16,10 +16,9 @@
             <div class="w-full lg:w-96">
                 <div class="relative">
                     <input type="text" wire:model.debounce.300ms="search" placeholder="Search projects..."
-                        class="w-full max-w-[400px] rounded-md ring-0 border border-background-contrast outline-none focus:ring-0 focus:outline-none focus:border-accent font-mono">
+                        class="w-full max-w-[400px] rounded-md ring-0 border border-muted bg-background-contrast outline-none focus:ring-0 focus:outline-none focus:border-accent font-mono text-muted dark:text-background transition-colors ease-in-out duration-200">
                     @if ($search)
-                        <button wire:click="$set('search', '')"
-                            class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                        <button wire:click="$set('search', '')" class="absolute right-3 top-2.5 text-text">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12"></path>
@@ -33,7 +32,7 @@
             <div class="flex flex-wrap gap-2 items-center">
                 {{-- Filtro categorie --}}
                 <select wire:model="categoryFilter"
-                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    class="rounded-md ring-0 border border-muted bg-background-contrast outline-none focus:ring-0 focus:outline-none focus:border-accent font-mono text-muted dark:text-background transition-colors ease-in-out duration-200">
                     <option value="">All categories</option>
                     @if (isset($categories) && $categories)
                         @foreach ($categories as $category)
@@ -46,7 +45,7 @@
 
                 {{-- Ordinamento --}}
                 <select wire:model="sortBy"
-                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    class="rounded-md ring-0 border border-muted bg-background-contrast outline-none focus:ring-0 focus:outline-none focus:border-accent font-mono text-muted dark:text-background transition-colors ease-in-out duration-200">
                     <option value="created_at">Most recent</option>
                     <option value="title">Title</option>
                     <option value="featured">In evidence</option>
@@ -54,14 +53,14 @@
 
                 {{-- Toggle direzione ordinamento --}}
                 <button wire:click="toggleSortDirection"
-                    class="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                    class="p-2 border border-muted rounded-lg bg-background-contrast transition">
                     @if ($sortDirection === 'asc')
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
                         </svg>
                     @else
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"></path>
                         </svg>
@@ -87,28 +86,29 @@
                     <h2 class="text-2xl font-bold text-text text-center">Featured Projects</h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3.5">
                     @foreach ($featuredProjects->take(3) as $project)
                         <article
-                            class="group relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+                            class="group relative bg-background rounded-lg overflow-hidden hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 border border-background-contrast">
                             {{-- Badge Featured --}}
                             <div class="absolute top-4 right-4 z-10">
-                                <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                <span
+                                    class="bg-accent text-background-contrast dark:text-text px-3 py-1 rounded-full text-xs font-semibold">
                                     Featured
                                 </span>
                             </div>
 
                             {{-- Immagine --}}
                             <a href="{{ route('portfolio.show', $project->slug) }}"
-                                class="block aspect-video overflow-hidden bg-gray-100">
+                                class="block aspect-video overflow-hidden bg-background">
                                 @if ($project->featured_image)
                                     <img src="{{ Storage::url($project->featured_image) }}" alt="{{ $project->title }}"
                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 @else
                                     <div
-                                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100">
-                                        <svg class="w-20 h-20 text-blue-300" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
+                                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted dark:from-primary to-background dark:to-secondary">
+                                        <svg class="w-20 h-20 text-text dark:text-background" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                                 d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                                         </svg>
@@ -119,23 +119,23 @@
                             {{-- Contenuto --}}
                             <div class="p-6">
                                 <a href="{{ route('portfolio.show', $project->slug) }}">
-                                    <h3
-                                        class="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition mb-2">
+                                    <h3 class="text-xl font-bold text-text group-hover:text-accent transition mb-2">
                                         {{ $project->title }}
                                     </h3>
                                 </a>
 
                                 @if ($project->client)
-                                    <p class="text-sm text-gray-500 mb-3">{{ $project->client }}</p>
+                                    <p class="text-sm text-text mb-3">
+                                        {{ $project->client }}</p>
                                 @endif
 
-                                <p class="text-gray-600 line-clamp-2 mb-4">
+                                <p class="text-text line-clamp-2 mb-4">
                                     {{ Str::limit(strip_tags($project->description), 100) }}
                                 </p>
 
                                 <a href="{{ route('portfolio.show', $project->slug) }}"
-                                    class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition">
-                                    Scopri di più
+                                    class="inline-flex items-center text-secondary hover:text-accent font-medium transition">
+                                    See more
                                     <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 5l7 7-7 7"></path>
@@ -155,12 +155,12 @@
             <h2 class="text-2xl font-bold text-text mb-6 text-center">All the projects where I've worked on</h2>
 
             @if (isset($projects) && $projects && $projects->count() > 0)
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
                     @foreach ($projects as $project)
                         <article
-                            class="group bg-background-contrast rounded-lg shadow-md overflow-hidden hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                            class="group bg-background rounded-lg overflow-hidden hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                             {{-- Immagine con overlay --}}
-                            <div class="relative aspect-video overflow-hidden bg-gray-100">
+                            <div class="relative aspect-video overflow-hidden bg-background">
                                 <a href="{{ route('portfolio.show', $project->slug) }}" class="block h-full">
                                     @if ($project->featured_image)
                                         <img src="{{ Storage::url($project->featured_image) }}"
@@ -168,9 +168,9 @@
                                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                     @else
                                         <div
-                                            class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
-                                            <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
+                                            class="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted dark:from-primary to-background dark:to-secondary">
+                                            <svg class="w-16 h-16 text-text dark:text-background" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                                             </svg>
@@ -214,7 +214,7 @@
                                     <div class="absolute top-4 left-4 flex flex-wrap gap-1">
                                         @foreach ($project->categories->take(2) as $category)
                                             <span
-                                                class="px-2 py-1 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 rounded-md">
+                                                class="px-2 py-1 bg-accent dark:bg-secondary backdrop-blur-sm text-xs font-medium text-background-contrast dark:text-text rounded-md">
                                                 {{ $category->name }}
                                             </span>
                                         @endforeach
@@ -226,12 +226,12 @@
                             <div class="p-4">
                                 <a href="{{ route('portfolio.show', $project->slug) }}">
                                     <h3
-                                        class="font-semibold text-gray-800 group-hover:text-blue-600 transition line-clamp-1 mb-2">
+                                        class="font-semibold text-text group-hover:text-accent transition line-clamp-1 mb-2">
                                         {{ $project->title }}
                                     </h3>
                                 </a>
 
-                                <p class="text-sm text-gray-600 line-clamp-2 mb-3">
+                                <p class="text-sm text-text line-clamp-2 mb-3">
                                     {{ Str::limit(strip_tags($project->description), 80) }}
                                 </p>
 
@@ -239,7 +239,8 @@
                                 @if (isset($project->technologies) && $project->technologies && $project->technologies->count() > 0)
                                     <div class="flex flex-wrap gap-1">
                                         @foreach ($project->technologies->take(3) as $tech)
-                                            <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-md">
+                                            <span
+                                                class="px-2 py-1 text-xs bg-muted text-background-contrast dark:text-text rounded-md">
                                                 {{ $tech->name }}
                                             </span>
                                         @endforeach
@@ -291,15 +292,23 @@
 
     {{-- Call to Action finale --}}
     <section
-        class="bg-background rounded-xl border border-background-contrast text-text py-[5rem] px-[2.5rem] mb-5 w-full max-w-[1000px]">
+        class="bg-background rounded-lg border border-background-contrast text-text py-[5rem] px-[2.5rem] mb-5 w-full max-w-[1000px]">
         <div class="max-w-4xl mx-auto text-center px-4">
             <h2 class="text-2xl md:text-3xl font-bold mb-4">
-                Hai un progetto in mente?
+                Have you some new project to pitch me?
             </h2>
-            <p class="text-xl text-accent mb-8">
-                Sono sempre interessato a nuove sfide e collaborazioni creative
+            <p class="text-xl text-secondary mb-8">
+                I'm always interest to be involved in new challeges and creative collaborations
             </p>
-            <a href="/#contacts"
+
+            @livewire('frontend.buttons.routing-button', [
+                'route' => 'home',
+                'label' => 'Get in Touch',
+                'style' => 'accent',
+                'navigate' => true,
+                'anchor' => 'contacts',
+            ])
+            {{-- <a href="/#contacts"
                 class="inline-flex items-center px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transform hover:scale-105 transition-all duration-300">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -307,7 +316,7 @@
                     </path>
                 </svg>
                 Contattami
-            </a>
+            </a> --}}
         </div>
     </section>
 

@@ -1,0 +1,116 @@
+/* resources/css/anchor-navigation.css */
+
+/**
+ * Stili per l'animazione di highlight quando si naviga verso un anchor
+ */
+.anchor-highlight {
+    position: relative;
+    animation: highlight-pulse 2s ease-out;
+}
+
+@keyframes highlight-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+        background-color: transparent;
+    }
+
+    10% {
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.1);
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+
+    50% {
+        box-shadow: 0 0 0 15px rgba(59, 130, 246, 0.05);
+        background-color: rgba(59, 130, 246, 0.02);
+    }
+
+    100% {
+        box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+        background-color: transparent;
+    }
+}
+
+/**
+ * Classe utility per offset quando c'è un header fisso
+ */
+.anchor-offset {
+    scroll-margin-top: 100px;
+    /* Adjust based on your header height */
+}
+
+/**
+ * Smooth scroll per browser che supportano scroll-behavior
+ */
+html {
+    scroll-behavior: smooth;
+}
+
+/**
+ * Fallback per browser che non supportano scroll-behavior
+ */
+@supports not (scroll-behavior: smooth) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/**
+ * Stili per i target degli anchor per migliorare l'accessibilità
+ */
+:target {
+    scroll-margin-top: 100px;
+}
+
+/**
+ * Animazione opzionale per elementi che entrano in viewport
+ */
+.anchor-target {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.anchor-target.in-view {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/**
+ * Indicatore visivo per sezioni con ID (utile in sviluppo)
+ */
+[id]:hover::before {
+    content: "#" attr(id);
+    position: absolute;
+    top: -25px;
+    left: 0;
+    font-size: 12px;
+    color: #64748b;
+    font-family: monospace;
+    opacity: 0;
+    animation: fade-in 0.3s forwards;
+}
+
+@keyframes fade-in {
+    to {
+        opacity: 1;
+    }
+}
+
+/**
+ * Stili per migliorare l'esperienza su mobile
+ */
+@media (max-width: 768px) {
+    .anchor-offset {
+        scroll-margin-top: 70px;
+        /* Header mobile più piccolo */
+    }
+
+    :target {
+        scroll-margin-top: 70px;
+    }
+
+    .anchor-highlight {
+        animation-duration: 1.5s;
+        /* Animazione più veloce su mobile */
+    }
+}

@@ -16,8 +16,7 @@
                     code,
                     great user experiences, and solving complex problems.</p>
                 <div class="flex flex-col lg:flex-row gap-2">
-                    <x-button-primary></x-button-primary>
-                    <x-button-secondary></x-button-secondary>
+                    bottoni
                 </div>
                 <ul class="flex gap-2">
                     <li

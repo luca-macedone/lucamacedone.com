@@ -39,21 +39,20 @@
             <ul class="grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-4 w-full py-5">
                 @foreach ($featuredProjects as $project)
                     <li
-                        class="rounded-lg border border-background-contrast overflow-hidden max-w-[550px] lg:max-w-full bg-background-contrast hover:border-muted hover:shadow-lg transition-shadow duration-300 group">
+                        class="rounded-lg border border-background-contrast overflow-hidden max-w-[550px] lg:max-w-full shadow-lg bg-background-contrast transform hover:-translate-y-1 hover:border-accent hover:shadow-lg transition-all duration-300 group">
                         <a href="{{ route('portfolio.show', $project->slug) }}" class="block">
                             {{-- Immagine del progetto --}}
-                            <div
-                                class="max-h-[300px] min-h-[300px] lg:max-h-[200px] lg:min-h-[200px] w-full overflow-hidden bg-gray-100">
+                            <div class="block aspect-video overflow-hidden bg-background">
                                 @if ($project->featured_image)
                                     <img src="{{ Storage::url($project->featured_image) }}" alt="{{ $project->title }}"
                                         class="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500">
                                 @else
                                     <div
-                                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
-                                        <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted dark:from-primary to-background dark:to-secondary">
+                                        <svg class="w-20 h-20 text-text dark:text-background" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                                         </svg>
                                     </div>
                                 @endif
@@ -118,10 +117,11 @@
             </div>
         @endif
 
-        @livewire('frontend.buttons.RoutingButton', [
+        @livewire('frontend.buttons.routing-button', [
             'route' => 'portfolio.index',
             'label' => 'See more projects',
             'style' => 'accent',
+            'anchor' => '',
         ])
     </section>
 </div>
