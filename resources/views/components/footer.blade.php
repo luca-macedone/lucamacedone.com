@@ -37,9 +37,6 @@
                     <a href="{{ route('login') }}" class="p-2 rounded-md border border-muted text-muted">
                         Restricted Area
                     </a>
-                    {{-- <a href="{{ route('register') }}" class="">
-                        Registrati
-                    </a> --}}
                     @livewire('frontend.theme-switcher')
                 </div>
             @else

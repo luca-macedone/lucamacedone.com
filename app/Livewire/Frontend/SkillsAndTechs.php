@@ -52,6 +52,10 @@ class SkillsAndTechs extends Component
         ];
 
         // Raggruppa le tecnologie per sezione
+        // $technologies->each(function ($tech) use (&$sections, $categoryMapping) {
+        //     $section = $categoryMapping[$tech->category] ?? 'Concepts';
+        //     $sections[$section][] = $tech;
+        // });
         $technologies->each(function ($tech) use (&$sections, $categoryMapping) {
             $section = $categoryMapping[$tech->category] ?? 'Concepts';
             $sections[$section][] = $tech;

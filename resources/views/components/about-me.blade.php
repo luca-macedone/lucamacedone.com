@@ -28,7 +28,7 @@
                     class="border p-5 mt-5 lg:mt-0 rounded-lg border-primary flex items-top gap-5 bg-background-contrast">
                     <div
                         class="bg-[#3e13b440] dark:bg-[#764bec40] text-primary rounded-md h-[44px] w-[48px] p-2.5  flex items-center justify-center">
-                        <span class="material-symbols-outlined">code</span>
+                        <x-heroicon-o-code-bracket class="w-6 h-6" />
                     </div>
                     <div class="flex flex-col">
                         <h5 class="font-bold text-lg">Clean Code</h5>
@@ -41,7 +41,8 @@
                 <li class="border p-5 rounded-lg border-accent flex items-top gap-5 bg-background-contrast">
                     <div
                         class="bg-[#3e13b440] dark:bg-[#764bec40] text-accent rounded-md h-[44px] w-[48px] p-2.5  flex items-center justify-center">
-                        <span class="material-symbols-outlined">palette</span>
+                        <x-heroicon-o-swatch class="w-6 h-6" />
+
                     </div>
                     <div class="flex flex-col">
                         <h5 class="font-bold text-lg">Design Focus</h5>
@@ -54,7 +55,7 @@
                 <li class="border p-5 rounded-lg border-secondary flex items-top gap-5 bg-background-contrast">
                     <div
                         class="bg-[#2a126e40] dark:bg-[#aa91ed40] text-secondary rounded-md h-[44px] w-[48px] p-2.5  flex items-center justify-center">
-                        <span class="material-symbols-outlined">bolt</span>
+                        <x-heroicon-o-bolt class="w-6 h-6" />
                     </div>
                     <div class="flex flex-col">
                         <h5 class="font-bold text-lg">Performance</h5>

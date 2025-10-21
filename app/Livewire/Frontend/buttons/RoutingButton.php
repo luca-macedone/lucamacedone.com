@@ -43,16 +43,17 @@ class RoutingButton extends Component
      */
     private function setStyleClasses(): void
     {
-        $baseClasses = 'inline-flex items-center justify-center px-6 py-3 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105';
+        $baseClasses = 'inline-flex items-center justify-center rounded-lg transition-all duration-300 transform hover:scale-105';
 
         $styleVariants = [
-            'primary' => 'bg-primary text-white hover:bg-primary-dark',
-            'secondary' => 'bg-secondary text-white hover:bg-secondary-dark',
-            'accent' => 'bg-accent text-background-contrast dark:text-text hover:bg-accent-dark',
-            'outline' => 'border-2 border-accent text-accent hover:bg-accent hover:text-white',
-            'ghost' => 'text-text hover:bg-background-contrast hover:text-accent',
-            'danger' => 'bg-red-600 text-white hover:bg-red-700',
-            'success' => 'bg-green-600 text-white hover:bg-green-700',
+            'primary' => 'px-6 py-3 font-semibold bg-primary text-white hover:bg-primary-dark',
+            'secondary' => 'px-6 py-3 font-semibold bg-secondary text-white hover:bg-secondary-dark',
+            'accent' => 'px-6 py-3 font-semibold bg-accent text-background-contrast dark:text-text hover:bg-accent-dark',
+            'outline' => 'px-6 py-3 font-semibold border-2 border-accent text-accent hover:bg-accent hover:text-white',
+            'ghost' => 'px-6 py-3 font-semibold text-text hover:bg-background-contrast hover:text-accent',
+            'danger' => 'px-6 py-3 font-semibold bg-red-600 text-white hover:bg-red-700',
+            'success' => 'px-6 py-3 font-semibold bg-green-600 text-white hover:bg-green-700',
+            'nav' => 'bg-transparent px-2 py-1.5 text-text hover:text-accent'
         ];
 
         $this->classes = array_merge(

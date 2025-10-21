@@ -14,7 +14,7 @@
             </div>
 
             <!-- Navigation Links per Guest -->
-            <ul class="hidden lg:flex gap-3">
+            {{-- <ul class="hidden lg:flex gap-3">
                 <li class="flex items-center">
                     <a href="#about-me">
                         About
@@ -29,6 +29,9 @@
                     <a href="#projects-preview">
                         Projects
                     </a>
+                    <a href="/portfolio">
+                        Projects Portfolio
+                    </a>
                 </li>
                 <li class="flex items-center">
                     <a href="#experiences">
@@ -39,6 +42,54 @@
                     <a href="#contacts">
                         Contacts
                     </a>
+                </li>
+            </ul> --}}
+
+            <ul class="hidden lg:flex gap-2.5 items-center">
+                <li>
+                    @livewire('frontend.buttons.routing-button', [
+                        'route' => 'home',
+                        'label' => 'About Me',
+                        'style' => 'nav',
+                        'navigate' => false,
+                        'anchor' => 'about-me',
+                    ])
+                </li>
+                <li>
+                    @livewire('frontend.buttons.routing-button', [
+                        'route' => 'home',
+                        'label' => 'Skills',
+                        'style' => 'nav',
+                        'navigate' => false,
+                        'anchor' => 'skills',
+                    ])
+                </li>
+                <li>
+                    @livewire('frontend.buttons.routing-button', [
+                        'route' => 'home',
+                        'label' => 'Projects',
+                        'style' => 'nav',
+                        'navigate' => false,
+                        'anchor' => 'projects-preview',
+                    ])
+                </li>
+                <li>
+                    @livewire('frontend.buttons.routing-button', [
+                        'route' => 'home',
+                        'label' => 'Work Experiences',
+                        'style' => 'nav',
+                        'navigate' => false,
+                        'anchor' => 'experiences',
+                    ])
+                </li>
+                <li>
+                    @livewire('frontend.buttons.routing-button', [
+                        'route' => 'home',
+                        'label' => 'Contacts',
+                        'style' => 'nav',
+                        'navigate' => false,
+                        'anchor' => 'contacts',
+                    ])
                 </li>
             </ul>
 

@@ -7,13 +7,16 @@
         </p>
         <div class="grid grid-flow-row grid-cols-1 lg:grid-cols-2 gap-5 max-w-[550px] lg:max-w-full py-5">
             <div class="flex flex-col gap-2.5 p-4 border border-muted rounded-lg order-1 bg-background-contrast">
-                <h4 class="text-lg font-semibold text-secondary">Let's Connect</h4>
+                <h4 class="text-lg font-semibold text-secondary flex items-center gap-2.5">
+                    Let's Connect
+                    <x-heroicon-o-link class="w-6 h-6" />
+                </h4>
                 <p>Feel free to reach out through any of these channels. I typically respond within 24 hours.</p>
                 <ul class="pt-2.5 flex flex-col gap-2.5">
                     <li class="flex gap-2.5">
                         <div
                             class="bg-[#3e13b440] dark:bg-[#764bec40] text-primary rounded-md h-[48px] w-[48px] p-2.5  flex items-center justify-center">
-                            <span class="material-symbols-outlined">email</span>
+                            <x-heroicon-o-envelope class="w-6 h-6" />
                         </div>
                         <div class="flex flex-col">
                             <h6 class="text-muted">Email</h6>
@@ -23,11 +26,7 @@
                     <li class="flex gap-2.5">
                         <div
                             class="bg-[#3e13b440] dark:bg-[#764bec40] text-primary rounded-md h-[48px] w-[48px] p-2.5  flex items-center justify-center fill-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"
-                                class="h-[24px] w-[24px] "><!--!Font Awesome Free v7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
-                                <path
-                                    d="M196.3 512L103.4 512L103.4 212.9L196.3 212.9L196.3 512zM149.8 172.1C120.1 172.1 96 147.5 96 117.8C96 103.5 101.7 89.9 111.8 79.8C121.9 69.7 135.6 64 149.8 64C164 64 177.7 69.7 187.8 79.8C197.9 89.9 203.6 103.6 203.6 117.8C203.6 147.5 179.5 172.1 149.8 172.1zM543.9 512L451.2 512L451.2 366.4C451.2 331.7 450.5 287.2 402.9 287.2C354.6 287.2 347.2 324.9 347.2 363.9L347.2 512L254.4 512L254.4 212.9L343.5 212.9L343.5 253.7L344.8 253.7C357.2 230.2 387.5 205.4 432.7 205.4C526.7 205.4 544 267.3 544 347.7L544 512L543.9 512z" />
-                            </svg>
+                            <x-simpleicon-linkedin class="w-6 h-6" />
                         </div>
                         <div class="flex flex-col">
                             <h6 class="text-muted">Text me on</h6>

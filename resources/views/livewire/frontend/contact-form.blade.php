@@ -1,7 +1,10 @@
 <form
     class="lg:row-span-2 flex flex-col gap-2.5 p-4 px-5 border border-muted rounded-lg order-3 lg:order-2 bg-background-contrast"
     wire:submit="submit">
-    <h2 class="text-lg font-semibold text-secondary">Send Me a Message</h2>
+    <h2 class="text-lg font-semibold text-secondary flex items-center gap-2.5">
+        Send Me a Message
+        <x-heroicon-s-paper-airplane class="w-6 h-6" />
+    </h2>
     <p>Tell me about your project or just say hello. I'll get back to you as soon as possible.</p>
     @if (session()->has('message'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md font-semibold">
