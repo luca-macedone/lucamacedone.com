@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\WorkExperienceController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\MediaController;
@@ -122,6 +123,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/', [AnalyticsController::class, 'index'])->name('index');
         Route::get('/projects', [AnalyticsController::class, 'projects'])->name('projects');
         Route::get('/export', [AnalyticsController::class, 'export'])->name('export');
+    });
+
+    Route::prefix('work-experiences')->name('work-experiences.')->group(function () {
+        Route::get('/', [WorkExperienceController::class, 'index'])->name('index');
+        Route::get('/create', [WorkExperienceController::class, 'create'])->name('create');
+        Route::post('/', [WorkExperienceController::class, 'store'])->name('store');
+        Route::get('/{workExperience}/edit', [WorkExperienceController::class, 'edit'])->name('edit');
+        Route::put('/{workExperience}', [WorkExperienceController::class, 'update'])->name('update');
+        Route::delete('/{workExperience}', [WorkExperienceController::class, 'destroy'])->name('destroy');
+
+        // API Routes per azioni AJAX
+        Route::post('/{workExperience}/toggle-status', [WorkExperienceController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/reorder', [WorkExperienceController::class, 'reorder'])->name('reorder');
     });
 });
 

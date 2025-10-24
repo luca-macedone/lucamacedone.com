@@ -11,7 +11,9 @@
             <div class="flex flex-col items-center lg:items-start gap-4">
                 <small class="text-sm text-primary text-center lg:text-start">Hello, I'm</small>
                 <h1 class="text-4xl font-semibold text-center lg:text-start">Luca Macedone</h1>
-                <h3 class="text-2xl text-muted dark:text-muted text-center lg:text-start">Full Stack Web Developer</h3>
+                <h3 class="text-2xl text-muted dark:text-muted text-center lg:text-start">
+                    Full Stack Web & Software Developer
+                </h3>
                 <p class="text-center lg:text-start max-w-[550px]">I create beautiful, functional web applications with
                     modern
                     technologies. Passionate about clean

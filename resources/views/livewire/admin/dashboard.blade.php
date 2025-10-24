@@ -23,6 +23,10 @@
                     class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
                     Gestisci Tecnologie
                 </a>
+                <a href="{{ route('admin.work-experiences.index') }}"
+                    class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
+                    Gestisci Esperienze Lavorative
+                </a>
                 <a href="{{ route('home') }}"
                     class="bg-secondary hover:bg-accent text-background font-bold py-2 px-3 rounded-md">
                     Visualizza Sito

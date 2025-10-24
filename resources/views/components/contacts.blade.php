@@ -36,6 +36,7 @@
                 </ul>
             </div>
             @livewire('frontend.contacts-form')
+            {{-- <x-contacts-form /> --}}
             <div
                 class="flex flex-col gap-2.5 p-4 border border-muted rounded-lg order-2 lg:order-3 bg-background-contrast">
                 <h4 class="text-lg font-semibold text-secondary">Why work with me?</h4>
