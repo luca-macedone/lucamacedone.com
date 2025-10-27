@@ -8,7 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TechnologyController;
-
+use App\Livewire\Admin\ContactMessages;
 // Livewire Components
 use App\Livewire\Frontend\Welcome;
 use App\Livewire\Frontend\Portfolio;
@@ -137,6 +137,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/{workExperience}/toggle-status', [WorkExperienceController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/reorder', [WorkExperienceController::class, 'reorder'])->name('reorder');
     });
+
+    Route::get('/contacts', ContactMessages::class)->name('contacts.index');
+    Route::get('/contacts/{id}', ContactMessages::class)->name('contacts.show');
 });
 
 // /*

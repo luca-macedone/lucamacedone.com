@@ -42,7 +42,7 @@
 
             </div>
         </div>
-        <div
+        {{-- <div
             class="bg-background h-full w-full rounded-lg border border-background-contrast p-2.5 col-span-1 lg:col-span-2 flex flex-col gap-2.5">
             <h2 class="text-xl font-semibold border-b border-background-contrast pb-2">
                 Messaggi ricevuti
@@ -50,6 +50,9 @@
             <div>
 
             </div>
+        </div> --}}
+        <div class="col-md-4">
+            @livewire('admin.contact-messages-widget')
         </div>
         {{-- <div class=" text-gray-900">
             <h1 class="text-2xl font-bold mb-6">Dashboard Admin</h1>

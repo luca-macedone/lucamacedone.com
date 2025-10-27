@@ -18,11 +18,17 @@ class ContactMessage extends Model
         'ip_address',
         'user_agent',
         'status',
-        'is_spam'
+        'is_spam',
+        'replied_at',
+        'reply_subject',
+        'reply_message',
+        'notes',
+        'replied_by'
     ];
 
     protected $casts = [
         'is_spam' => 'boolean',
+        'replied_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
