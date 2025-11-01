@@ -15,7 +15,7 @@
                             style="border-color: {{ $tech->color }}">
                             @if ($tech->icon)
                                 <span class="text-xs" style="color: {{ $tech->color }}">
-                                    {!! $tech->icon !!}
+                                    {!! sanitizeHtml($tech->icon, 'strict') !!}
                                 </span>
                             @else
                                 <span class="w-2 h-2 rounded-full" style="background-color: {{ $tech->color }}"></span>

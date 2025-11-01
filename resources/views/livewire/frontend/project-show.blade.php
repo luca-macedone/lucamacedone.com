@@ -67,7 +67,7 @@
                     <div class="bg-white rounded-lg shadow-sm p-8 mb-8">
                         <h2 class="text-2xl font-bold mb-4">Descrizione del Progetto</h2>
                         <div class="prose max-w-none">
-                            {!! nl2br(e($project->content)) !!}
+                            {!! sanitizeHtml($project->content, 'default') !!}
                         </div>
                     </div>
                 @endif
