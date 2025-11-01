@@ -17,25 +17,26 @@ class DashboardController extends Controller
     public function index()
     {
         $stats = [
-            'total_projects' => Project::count(),
-            'published_projects' => Project::published()->count(),
-            'draft_projects' => Project::where('status', 'draft')->count(),
-            'featured_projects' => Project::featured()->count(),
+            // Usa forStats per conteggi rapidi
+            'total_projects' => Project::forStats()->count(),
+            'published_projects' => Project::forStats()->published()->count(),
+            'draft_projects' => Project::forStats()->where('status', 'draft')->count(),
+            'featured_projects' => Project::forStats()->featured()->count(),
             'total_categories' => ProjectCategory::count(),
             'total_technologies' => ProjectTechnology::count(),
             'total_users' => User::count(),
         ];
 
-        // Progetti recenti
-        $recentProjects = Project::with(['categories', 'technologies'])
-            ->orderBy('created_at', 'desc')
+        // Progetti recenti per dashboard - usa withBasicInfo
+        $recentProjects = Project::withBasicInfo()
+            ->latest()
             ->limit(5)
             ->get();
 
-        // Progetti più visualizzati (se hai implementato tracking)
-        $popularProjects = Project::published()
-            ->with(['categories'])
-            ->orderBy('created_at', 'desc') // Sostituisci con 'views_count' se implementato
+        // Progetti popolari
+        $popularProjects = Project::withBasicInfo()
+            ->published()
+            ->ordered()
             ->limit(5)
             ->get();
 
@@ -48,13 +49,7 @@ class DashboardController extends Controller
         // Tecnologie più usate
         $topTechnologies = ProjectTechnology::withCount('projects')
             ->orderBy('projects_count', 'desc')
-            ->limit(8)
-            ->get();
-
-        // Attività recente (ultimi progetti modificati)
-        $recentActivity = Project::with(['categories'])
-            ->orderBy('updated_at', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get();
 
         return view('admin.dashboard', compact(
@@ -62,8 +57,7 @@ class DashboardController extends Controller
             'recentProjects',
             'popularProjects',
             'topCategories',
-            'topTechnologies',
-            'recentActivity'
+            'topTechnologies'
         ));
     }
 

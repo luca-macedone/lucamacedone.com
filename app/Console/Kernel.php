@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\CleanupContactMessages::class,
+        \App\Console\Commands\FlushProjectCache::class,
     ];
 
     /**
@@ -62,6 +63,23 @@ class Kernel extends ConsoleKernel
         if ($this->app->environment('local')) {
             $schedule->command('telescope:prune')->daily();
         }
+
+        // Aggiorna cache conteggi ogni notte alle 2 AM
+        $schedule->job(new \App\Jobs\UpdateTechnologyCacheJob())
+            ->dailyAt('02:00')
+            ->withoutOverlapping()
+            ->onOneServer()
+            ->runInBackground();
+
+        // Warm cache ogni mattina alle 6 AM
+        $schedule->command('cache:warm-projects')
+            ->dailyAt('06:00')
+            ->runInBackground();
+
+        // Pulizia log cache invalidations vecchi di 30 giorni
+        $schedule->command('model:prune', [
+            '--model' => 'App\Models\CacheInvalidation',
+        ])->daily();
     }
 
     /**

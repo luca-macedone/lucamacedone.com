@@ -63,27 +63,34 @@ class Portfolio extends Component
 
     public function getProjects()
     {
-        $query = Project::with(['categories', 'technologies'])
-            ->where('status', 'published') // Solo progetti pubblicati
-            ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('title', 'like', '%' . $this->search . '%')
-                        ->orWhere('description', 'like', '%' . $this->search . '%')
-                        ->orWhere('client', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when($this->categoryFilter, function ($query) {
-                $query->whereHas('categories', function ($q) {
-                    $q->where('project_categories.id', $this->categoryFilter);
-                });
-            });
+        // Usa withBasicInfo per il frontend pubblico
+        $query = Project::withBasicInfo()
+            ->published();
 
-        // Ordinamento speciale per progetti in evidenza
-        if ($this->sortBy === 'featured') {
-            $query->orderBy('is_featured', 'desc')
-                ->orderBy('sort_order', 'asc');
-        } else {
-            $query->orderBy($this->sortBy, $this->sortDirection);
+        // Applica ricerca
+        if ($this->search) {
+            $query->search($this->search);
+        }
+
+        // Filtro categoria
+        if ($this->categoryFilter && $this->categoryFilter !== 'all') {
+            $query->inCategory($this->categoryFilter);
+        }
+
+        // Ordinamento
+        switch ($this->sortBy) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'name':
+                $query->orderBy('title', 'asc');
+                break;
+            case 'featured':
+                $query->featured()->ordered();
+                break;
+            default: // 'recent'
+                $query->latest();
+                break;
         }
 
         return $query->paginate($this->perPage);
@@ -116,14 +123,10 @@ class Portfolio extends Component
     {
         return view('livewire.frontend.portfolio', [
             'projects' => $this->getProjects(),
-            'featuredProjects' => $this->getFeaturedProjects(),
-            'categories' => ProjectCategory::withCount(['projects' => function ($query) {
-                $query->where('status', 'published');
-            }])
-                ->having('projects_count', '>', 0)
-                ->orderBy('name')
+            'categories' => ProjectCategory::has('projects')
+                ->withCount('projects')
+                ->ordered()
                 ->get(),
-            'stats' => $this->getStats(),
         ])->layout('layouts.guest');
     }
 }

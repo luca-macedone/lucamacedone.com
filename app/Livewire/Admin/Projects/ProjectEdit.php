@@ -91,7 +91,12 @@ class ProjectEdit extends Component
     public function mount(Project $project)
     {
         // Carica il progetto con tutte le relazioni necessarie
-        $this->project = $project->load(['categories', 'technologies', 'galleryImages', 'seo']);
+        $this->project = $project->load([
+            'categories',
+            'technologies',
+            'galleryImages',
+            'seo'
+        ]);
 
         // Popola i campi base
         $this->title = $project->title;

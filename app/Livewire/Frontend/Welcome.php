@@ -11,10 +11,10 @@ class Welcome extends Component
     // Altri metodi del componente...
     public function getFeaturedProjects()
     {
-        return Project::with(['categories', 'technologies'])
-            ->where('status', 'published')
-            ->where('is_featured', true)
-            ->orderBy('sort_order', 'asc')
+        return Project::forCard()
+            ->published()
+            ->featured()
+            ->ordered()
             ->limit(4)
             ->get();
     }
@@ -24,10 +24,11 @@ class Welcome extends Component
         $featured = $this->getFeaturedProjects();
 
         if ($featured->count() < 4) {
-            $latest = Project::with(['categories', 'technologies'])
-                ->where('status', 'published')
+            // Completa con progetti recenti
+            $latest = Project::forCard()
+                ->published()
                 ->whereNotIn('id', $featured->pluck('id'))
-                ->orderBy('created_at', 'desc')
+                ->latest()
                 ->limit(4 - $featured->count())
                 ->get();
 
@@ -40,11 +41,12 @@ class Welcome extends Component
     public function getStats()
     {
         return [
-            'total_projects' => Project::where('status', 'published')->count(),
+            'total_projects' => Project::forStats()->published()->count(),
             'years_experience' => now()->year - 2018,
             'technologies_used' => \App\Models\ProjectTechnology::count(),
-            'clients_served' => Project::whereNotNull('client')
-                ->where('status', 'published')
+            'clients_served' => Project::forStats()
+                ->whereNotNull('client')
+                ->published()
                 ->distinct('client')
                 ->count('client'),
         ];

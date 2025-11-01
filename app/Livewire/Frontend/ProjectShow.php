@@ -19,13 +19,11 @@ class ProjectShow extends Component
 
     public function mount($slug)
     {
-        // Trova il progetto tramite slug con tutte le relazioni necessarie
-        $this->project = Project::where('slug', $slug)
-            ->where('status', 'published')
-            ->with(['categories', 'technologies', 'galleryImages', 'seo'])
+        $this->project = Project::forShow()
+            ->published()
+            ->where('slug', $slug)
             ->firstOrFail();
 
-        // Prepara tutte le immagini
         $this->allImages = $this->getAllImages();
     }
 

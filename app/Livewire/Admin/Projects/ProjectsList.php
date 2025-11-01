@@ -241,29 +241,26 @@ class ProjectsList extends Component
     }
 
     /**
-     * Ottieni i progetti filtrati e paginati
+     * Ottieni progetti con scope appropriato per admin
      */
     private function getProjects()
     {
-        $query = Project::with(['categories', 'technologies']);
+        // Usa withFullDetails per admin - carica tutto
+        $query = Project::withFullDetails();
 
-        // Applica filtri
+        // Applica filtri di ricerca
         if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('title', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%')
-                    ->orWhere('client', 'like', '%' . $this->search . '%');
-            });
+            $query->search($this->search);
         }
 
+        // Filtro stato
         if ($this->statusFilter) {
             $query->where('status', $this->statusFilter);
         }
 
+        // Filtro categoria
         if ($this->categoryFilter) {
-            $query->whereHas('categories', function ($q) {
-                $q->where('project_categories.id', $this->categoryFilter);
-            });
+            $query->inCategory($this->categoryFilter);
         }
 
         // Applica ordinamento
@@ -273,15 +270,15 @@ class ProjectsList extends Component
     }
 
     /**
-     * Ottieni statistiche progetti
+     * Ottieni statistiche progetti (senza relazioni)
      */
     private function getStats()
     {
         return [
-            'total' => Project::count(),
-            'published' => Project::where('status', 'published')->count(),
-            'draft' => Project::where('status', 'draft')->count(),
-            'featured' => Project::where('is_featured', true)->count(),
+            'total' => Project::forStats()->count(),
+            'published' => Project::forStats()->published()->count(),
+            'draft' => Project::forStats()->where('status', 'draft')->count(),
+            'featured' => Project::forStats()->featured()->count(),
         ];
     }
 

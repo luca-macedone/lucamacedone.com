@@ -130,15 +130,12 @@ class ProjectsTable extends Component
 
     public function render()
     {
-        $query = Project::with(['categories', 'technologies']);
+        // Per tabelle admin usa withFullDetails
+        $query = Project::withFullDetails();
 
-        // Filtri
+        // Applica filtri...
         if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('title', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%')
-                    ->orWhere('client', 'like', '%' . $this->search . '%');
-            });
+            $query->search($this->search);
         }
 
         if ($this->statusFilter) {
@@ -146,9 +143,7 @@ class ProjectsTable extends Component
         }
 
         if ($this->categoryFilter) {
-            $query->whereHas('categories', function ($q) {
-                $q->where('project_categories.id', $this->categoryFilter);
-            });
+            $query->inCategory($this->categoryFilter);
         }
 
         // Ordinamento
