@@ -17,15 +17,28 @@ class ProjectSeo extends Model
         'meta_title',
         'meta_description',
         'meta_keywords',
-        'og_image',
+        'og_image'
     ];
 
     protected $casts = [
-        'meta_keywords' => 'array', // Cast automatico JSON to array
+        'meta_keywords' => 'array',
     ];
 
     /**
-     * Relazione con il progetto
+     * Boot method for model events
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Clear cache quando SEO viene modificato
+        static::saved(function ($seo) {
+            cache()->tags(['projects', 'project_' . $seo->project_id, 'seo'])->flush();
+        });
+    }
+
+    /**
+     * Relationships
      */
     public function project(): BelongsTo
     {
@@ -33,37 +46,46 @@ class ProjectSeo extends Model
     }
 
     /**
-     * Ottieni l'URL completo dell'immagine OG
+     * Get OG Image URL
      */
-    public function getOgImageUrlAttribute()
+    public function getOgImageUrlAttribute(): ?string
     {
-        return $this->og_image
-            ? asset('storage/' . $this->og_image)
-            : null;
+        if (!$this->og_image) {
+            return $this->project->featured_image_url;
+        }
+
+        if (filter_var($this->og_image, FILTER_VALIDATE_URL)) {
+            return $this->og_image;
+        }
+
+        return asset('storage/' . $this->og_image);
     }
 
     /**
-     * Ottieni keywords come stringa (per form edit)
+     * Get formatted keywords as string
      */
-    public function getKeywordsStringAttribute()
+    public function getKeywordsStringAttribute(): string
     {
-        if ($this->meta_keywords) {
-            return is_array($this->meta_keywords)
-                ? implode(', ', $this->meta_keywords)
-                : $this->meta_keywords;
+        if (is_array($this->meta_keywords)) {
+            return implode(', ', $this->meta_keywords);
         }
-        return '';
+
+        return $this->meta_keywords ?? '';
     }
 
     /**
-     * Imposta keywords da stringa
+     * Generate default meta title if not set
      */
-    public function setKeywordsFromString($string)
+    public function getComputedMetaTitleAttribute(): string
     {
-        if ($string) {
-            $this->meta_keywords = array_map('trim', explode(',', $string));
-        } else {
-            $this->meta_keywords = null;
-        }
+        return $this->meta_title ?: $this->project->title . ' | ' . config('app.name');
+    }
+
+    /**
+     * Generate default meta description if not set
+     */
+    public function getComputedMetaDescriptionAttribute(): string
+    {
+        return $this->meta_description ?: $this->project->excerpt;
     }
 }

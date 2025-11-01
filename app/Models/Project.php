@@ -1,4 +1,5 @@
 <?php
+// app/Models/Project.php
 
 namespace App\Models;
 
@@ -8,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 
 class Project extends Model
 {
@@ -27,20 +27,20 @@ class Project extends Model
         'end_date',
         'status',
         'sort_order',
-        'is_featured',
+        'is_featured'
     ];
 
     protected $casts = [
+        'is_featured' => 'boolean',
         'start_date' => 'date',
         'end_date' => 'date',
-        'is_featured' => 'boolean'
+        'sort_order' => 'integer',
     ];
 
-    // RIMUOVIAMO L'EAGER LOADING GLOBALE
-    // protected $with = ['categories', 'technologies'];
+    protected $appends = ['status_label', 'formatted_period'];
 
     /**
-     * Boot method per gestire automaticamente lo slug
+     * Boot method for model events
      */
     protected static function boot()
     {
@@ -48,26 +48,87 @@ class Project extends Model
 
         static::creating(function ($project) {
             if (empty($project->slug)) {
-                $project->slug = static::generateUniqueSlug($project->title);
+                $project->slug = Str::slug($project->title);
+            }
+
+            if (is_null($project->sort_order)) {
+                $project->sort_order = static::max('sort_order') + 1;
             }
         });
 
         static::updating(function ($project) {
             if ($project->isDirty('title') && !$project->isDirty('slug')) {
-                $project->slug = static::generateUniqueSlug($project->title, $project->id);
+                $project->slug = Str::slug($project->title);
             }
         });
 
-        // Quando un progetto viene eliminato, elimina anche i file fisici
-        static::deleting(function ($project) {
-            if ($project->featured_image) {
-                Storage::disk('public')->delete($project->featured_image);
-            }
-
-            foreach ($project->images as $image) {
-                Storage::disk('public')->delete($image->filename);
-            }
+        // Clear cache quando un progetto viene modificato
+        static::saved(function ($project) {
+            cache()->tags(['projects'])->flush();
         });
+
+        static::deleted(function ($project) {
+            cache()->tags(['projects'])->flush();
+        });
+    }
+
+    /**
+     * =================================================================
+     * RELATIONSHIPS
+     * =================================================================
+     */
+
+    /**
+     * Categorie del progetto
+     */
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ProjectCategory::class,
+            'project_category_pivot',
+            'project_id',
+            'project_category_id'
+        );
+    }
+
+    /**
+     * Tecnologie utilizzate nel progetto
+     */
+    public function technologies(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ProjectTechnology::class,
+            'project_technology_pivot',
+            'project_id',
+            'project_technology_id'
+        );
+    }
+
+    /**
+     * Immagini della galleria
+     */
+    public function galleryImages(): HasMany
+    {
+        return $this->hasMany(ProjectImage::class)
+            ->where('type', 'gallery')
+            ->orderBy('sort_order');
+    }
+
+    /**
+     * Tutte le immagini del progetto
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProjectImage::class)
+            ->orderBy('sort_order');
+    }
+
+    /**
+     * SEO metadata
+     */
+    public function seo(): HasOne
+    {
+        return $this->hasOne(ProjectSeo::class);
     }
 
     /**
@@ -78,7 +139,6 @@ class Project extends Model
 
     /**
      * Scope per il pannello admin con tutti i dettagli
-     * Uso: Project::withFullDetails()->get()
      */
     public function scopeWithFullDetails($query)
     {
@@ -98,7 +158,6 @@ class Project extends Model
 
     /**
      * Scope per listing pubblico con informazioni base
-     * Uso: Project::withBasicInfo()->published()->get()
      */
     public function scopeWithBasicInfo($query)
     {
@@ -110,13 +169,12 @@ class Project extends Model
 
     /**
      * Scope per card/preview (minimo indispensabile)
-     * Uso: Project::forCard()->published()->limit(6)->get()
      */
     public function scopeForCard($query)
     {
         return $query->with([
             'categories:id,name,color',
-            'technologies:id,name,icon'  // AGGIUNTO: carica tecnologie minime
+            'technologies:id,name,icon'
         ])->select([
             'id',
             'title',
@@ -126,30 +184,26 @@ class Project extends Model
             'client',
             'status',
             'is_featured',
-            'sort_order',  // AGGIUNTO: necessario per ordinamento
+            'sort_order',
             'created_at'
         ]);
     }
 
     /**
      * Scope per visualizzazione dettagliata singolo progetto
-     * Uso: Project::forShow()->where('slug', $slug)->firstOrFail()
      */
     public function scopeForShow($query)
     {
         return $query->with([
             'categories',
             'technologies',
-            'galleryImages' => function ($q) {
-                $q->orderBy('sort_order');
-            },
+            'galleryImages',
             'seo'
         ]);
     }
 
     /**
      * Scope per dashboard/statistiche (nessuna relazione)
-     * Uso: Project::forStats()->count()
      */
     public function scopeForStats($query)
     {
@@ -227,117 +281,186 @@ class Project extends Model
     }
 
     /**
-     * =================================================================
-     * RELAZIONI
-     * =================================================================
+     * Scope per progetti in un periodo
      */
-
-    /**
-     * Relazione con le categorie (con timestamps)
-     */
-    public function categories(): BelongsToMany
+    public function scopeInPeriod($query, $startDate = null, $endDate = null)
     {
-        return $this->belongsToMany(ProjectCategory::class, 'project_category_pivot')
-            ->withTimestamps();
-    }
-
-    /**
-     * Relazione con le tecnologie (con timestamps)
-     */
-    public function technologies(): BelongsToMany
-    {
-        return $this->belongsToMany(ProjectTechnology::class, 'project_technology_pivot')
-            ->withTimestamps();
-    }
-
-    /**
-     * Relazione con le immagini della galleria
-     */
-    public function images(): HasMany
-    {
-        return $this->hasMany(ProjectImage::class)->orderBy('sort_order');
-    }
-
-    /**
-     * Alias per compatibilità con codice esistente
-     */
-    public function galleryImages(): HasMany
-    {
-        return $this->images();
-    }
-
-    /**
-     * Relazione con i dati SEO
-     */
-    public function seo(): HasOne
-    {
-        return $this->hasOne(ProjectSeo::class);
-    }
-
-    /**
-     * =================================================================
-     * METODI HELPER
-     * =================================================================
-     */
-
-    /**
-     * Genera uno slug unico per il progetto
-     */
-    protected static function generateUniqueSlug($title, $excludeId = null)
-    {
-        $slug = Str::slug($title);
-        $originalSlug = $slug;
-        $count = 1;
-
-        while (static::where('slug', $slug)
-            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
-            ->exists()
-        ) {
-            $slug = $originalSlug . '-' . $count;
-            $count++;
+        if ($startDate) {
+            $query->where('start_date', '>=', $startDate);
         }
 
-        return $slug;
+        if ($endDate) {
+            $query->where(function ($q) use ($endDate) {
+                $q->where('end_date', '<=', $endDate)
+                    ->orWhereNull('end_date');
+            });
+        }
+
+        return $query;
     }
 
     /**
-     * Ottieni l'URL dell'immagine in evidenza
+     * =================================================================
+     * ACCESSORS & MUTATORS
+     * =================================================================
      */
-    public function getFeaturedImageUrlAttribute()
-    {
-        return $this->featured_image
-            ? asset('storage/' . $this->featured_image)
-            : asset('images/placeholder.jpg');
-    }
 
     /**
-     * Ottieni il tempo di lettura stimato
+     * Get status label attribute
      */
-    public function getReadingTimeAttribute()
-    {
-        $wordCount = str_word_count(strip_tags($this->content));
-        $minutes = ceil($wordCount / 200); // 200 parole al minuto
-        return $minutes;
-    }
-
-    /**
-     * Controlla se il progetto è nuovo (ultimi 30 giorni)
-     */
-    public function getIsNewAttribute()
-    {
-        return $this->created_at->gt(now()->subDays(30));
-    }
-
-    /**
-     * Ottieni lo stato formattato
-     */
-    public function getStatusBadgeAttribute()
+    public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'published' => '<span class="badge badge-success">Pubblicato</span>',
-            'draft' => '<span class="badge badge-warning">Bozza</span>',
-            'archived' => '<span class="badge badge-secondary">Archiviato</span>',
-            default => '<span class="badge badge-light">Sconosciuto</span>'
+            'published' => 'Pubblicato',
+            'draft' => 'Bozza',
+            default => ucfirst($this->status)
         };
+    }
+
+    /**
+     * Get formatted period attribute
+     */
+    public function getFormattedPeriodAttribute(): string
+    {
+        if (!$this->start_date) {
+            return '';
+        }
+
+        $start = $this->start_date->format('M Y');
+        $end = $this->end_date ? $this->end_date->format('M Y') : 'Presente';
+
+        return "{$start} - {$end}";
+    }
+
+    /**
+     * Get featured image URL
+     */
+    public function getFeaturedImageUrlAttribute(): ?string
+    {
+        if (!$this->featured_image) {
+            return null;
+        }
+
+        if (filter_var($this->featured_image, FILTER_VALIDATE_URL)) {
+            return $this->featured_image;
+        }
+
+        return asset('storage/' . $this->featured_image);
+    }
+
+    /**
+     * Get excerpt from description or content
+     */
+    public function getExcerptAttribute($length = 200): string
+    {
+        $text = $this->description ?: strip_tags($this->content);
+        return Str::limit($text, $length);
+    }
+
+    /**
+     * =================================================================
+     * HELPER METHODS
+     * =================================================================
+     */
+
+    /**
+     * Check if project is published
+     */
+    public function isPublished(): bool
+    {
+        return $this->status === 'published';
+    }
+
+    /**
+     * Check if project is draft
+     */
+    public function isDraft(): bool
+    {
+        return $this->status === 'draft';
+    }
+
+    /**
+     * Check if project is featured
+     */
+    public function isFeatured(): bool
+    {
+        return $this->is_featured;
+    }
+
+    /**
+     * Check if project is currently active
+     */
+    public function isActive(): bool
+    {
+        return $this->end_date === null || $this->end_date->isFuture();
+    }
+
+    /**
+     * Get next project
+     */
+    public function getNextProject()
+    {
+        return static::published()
+            ->where('sort_order', '>', $this->sort_order)
+            ->orderBy('sort_order', 'asc')
+            ->first();
+    }
+
+    /**
+     * Get previous project
+     */
+    public function getPreviousProject()
+    {
+        return static::published()
+            ->where('sort_order', '<', $this->sort_order)
+            ->orderBy('sort_order', 'desc')
+            ->first();
+    }
+
+    /**
+     * Get related projects
+     */
+    public function getRelatedProjects($limit = 3)
+    {
+        $categoryIds = $this->categories->pluck('id');
+
+        return static::published()
+            ->where('id', '!=', $this->id)
+            ->whereHas('categories', function ($q) use ($categoryIds) {
+                $q->whereIn('project_categories.id', $categoryIds);
+            })
+            ->withBasicInfo()
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Update SEO metadata
+     */
+    public function updateSeo(array $data)
+    {
+        if ($this->seo) {
+            $this->seo->update($data);
+        } else {
+            $this->seo()->create($data);
+        }
+    }
+
+    /**
+     * Sync categories
+     */
+    public function syncCategories(array $categoryIds)
+    {
+        $this->categories()->sync($categoryIds);
+        cache()->tags(['projects', 'categories'])->flush();
+    }
+
+    /**
+     * Sync technologies
+     */
+    public function syncTechnologies(array $technologyIds)
+    {
+        $this->technologies()->sync($technologyIds);
+        cache()->tags(['projects', 'technologies'])->flush();
     }
 }

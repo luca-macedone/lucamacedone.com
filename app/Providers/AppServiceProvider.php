@@ -14,8 +14,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        if (config('cache.default') === 'file') {
-            $this->app->register(\App\Providers\CacheServiceProvider::class);
+        if (config('cache.default') === 'redis') {
+            try {
+                $this->app->make('redis')->connection()->ping();
+            } catch (\Exception $e) {
+                config(['cache.default' => 'database']);
+                config(['session.driver' => 'database']);
+                \Log::warning('Redis non disponibile, fallback su database driver');
+            }
         }
     }
 

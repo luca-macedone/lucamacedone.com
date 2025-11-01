@@ -1,11 +1,11 @@
 <?php
+// app/Models/ProjectImage.php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class ProjectImage extends Model
 {
@@ -14,11 +14,11 @@ class ProjectImage extends Model
     protected $fillable = [
         'project_id',
         'filename',
-        'type',
-        'title',
+        'original_name',
         'alt_text',
         'caption',
         'sort_order',
+        'type'
     ];
 
     protected $casts = [
@@ -26,22 +26,34 @@ class ProjectImage extends Model
     ];
 
     /**
-     * Boot method per gestire eliminazione file
+     * Boot method for model events
      */
     protected static function boot()
     {
         parent::boot();
 
-        static::deleting(function ($image) {
-            // Elimina il file fisico quando il record viene eliminato
-            if ($image->filename && Storage::disk('public')->exists($image->filename)) {
-                Storage::disk('public')->delete($image->filename);
+        static::creating(function ($image) {
+            if (is_null($image->sort_order)) {
+                $maxOrder = static::where('project_id', $image->project_id)
+                    ->where('type', $image->type)
+                    ->max('sort_order');
+
+                $image->sort_order = ($maxOrder ?? -1) + 1;
             }
+        });
+
+        // Clear cache quando un'immagine viene modificata
+        static::saved(function ($image) {
+            cache()->tags(['projects', 'project_' . $image->project_id])->flush();
+        });
+
+        static::deleted(function ($image) {
+            cache()->tags(['projects', 'project_' . $image->project_id])->flush();
         });
     }
 
     /**
-     * Relazione con il progetto
+     * Relationships
      */
     public function project(): BelongsTo
     {
@@ -49,7 +61,19 @@ class ProjectImage extends Model
     }
 
     /**
-     * Scope per tipo immagine
+     * Get full URL for the image
+     */
+    public function getUrlAttribute(): string
+    {
+        if (filter_var($this->filename, FILTER_VALIDATE_URL)) {
+            return $this->filename;
+        }
+
+        return asset('storage/' . $this->filename);
+    }
+
+    /**
+     * Scopes
      */
     public function scopeGallery($query)
     {
@@ -61,58 +85,13 @@ class ProjectImage extends Model
         return $query->where('type', 'featured');
     }
 
-    /**
-     * Ottieni URL completo dell'immagine
-     */
-    public function getUrlAttribute()
+    public function scopeThumbnail($query)
     {
-        return $this->filename
-            ? asset('storage/' . $this->filename)
-            : asset('images/placeholder.jpg');
+        return $query->where('type', 'thumbnail');
     }
 
-    /**
-     * Ottieni dimensioni dell'immagine
-     */
-    public function getDimensionsAttribute()
+    public function scopeOrdered($query)
     {
-        if ($this->filename && Storage::disk('public')->exists($this->filename)) {
-            $path = Storage::disk('public')->path($this->filename);
-            if (file_exists($path)) {
-                list($width, $height) = getimagesize($path);
-                return [
-                    'width' => $width,
-                    'height' => $height,
-                    'ratio' => $width / $height
-                ];
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Ottieni dimensione del file
-     */
-    public function getSizeAttribute()
-    {
-        if ($this->filename && Storage::disk('public')->exists($this->filename)) {
-            return Storage::disk('public')->size($this->filename);
-        }
-        return 0;
-    }
-
-    /**
-     * Ottieni dimensione formattata
-     */
-    public function getFormattedSizeAttribute()
-    {
-        $size = $this->size;
-        $units = ['B', 'KB', 'MB', 'GB'];
-
-        for ($i = 0; $size > 1024 && $i < count($units) - 1; $i++) {
-            $size /= 1024;
-        }
-
-        return round($size, 2) . ' ' . $units[$i];
+        return $query->orderBy('sort_order', 'asc');
     }
 }
