@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Cacheable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
@@ -9,6 +10,7 @@ use Carbon\Carbon;
 class WorkExperience extends Model
 {
     use HasFactory;
+    use Cacheable;
 
     protected $fillable = [
         'job_title',

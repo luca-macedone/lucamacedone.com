@@ -3,237 +3,164 @@
 namespace App\Livewire\Frontend;
 
 use App\Models\ProjectTechnology;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Livewire\Component;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 class SkillsAndTechs extends Component
 {
-    public $showAll = false;
-    public $maxItemsPerSection = 8;
+    public $selectedCategory = 'all';
+    public $searchTerm = '';
 
-    /**
-     * Durata cache in secondi (1 ora)
-     */
+    // Cache configuration
     private const CACHE_TTL = 3600;
+    private const CACHE_PREFIX = 'luca_macedone_cache_';
 
     /**
-     * Ottieni le tecnologie raggruppate per sezione
+     * Mount del componente
+     */
+    public function mount()
+    {
+        // Pre-carica le statistiche
+        $this->getStats();
+    }
+
+    /**
+     * Recupera le statistiche con cache
+     */
+    #[Computed(cache: true)]
+    public function stats()
+    {
+        return ProjectTechnology::getSkillsStats();
+    }
+
+    /**
+     * Recupera le categorie disponibili
+     */
+    #[Computed(cache: true)]
+    public function categories()
+    {
+        $cacheKey = self::CACHE_PREFIX . 'technologies_categories_list';
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            return ProjectTechnology::query()
+                ->select('category')
+                ->distinct()
+                ->whereNotNull('category')
+                ->orderBy('category')
+                ->pluck('category')
+                ->filter()
+                ->map(function ($category) {
+                    return [
+                        'value' => $category,
+                        'label' => ucfirst($category),
+                        'count' => ProjectTechnology::where('category', $category)->count()
+                    ];
+                })
+                ->filter(fn($cat) => $cat['count'] > 0)
+                ->values();
+        });
+    }
+
+    /**
+     * Recupera le tecnologie filtrate
      */
     #[Computed]
-    public function skillsSections(): array
+    public function technologies()
     {
-        // Usa cache con tag per facilitare l'invalidazione
-        $cacheKey = 'skills_technologies';
-        $cacheTags = ['skills_technologies', 'project_technologies'];
-
-        $technologies = $this->getCachedTechnologies($cacheKey, $cacheTags);
-
-        // Mappatura categorie alle sezioni
-        $categoryMapping = $this->getCategoryMapping();
-
-        // Inizializza le sezioni
-        $sections = $this->initializeSections();
-
-        // Raggruppa le tecnologie per sezione
-        $technologies->each(function ($tech) use (&$sections, $categoryMapping) {
-            $section = $categoryMapping[$tech->category] ?? 'Concepts';
-            $sections[$section][] = $tech;
-        });
-
-        // Processa e limita le sezioni
-        return $this->processSections($sections);
-    }
-
-    /**
-     * Recupera le tecnologie dalla cache o dal database
-     */
-    private function getCachedTechnologies(string $cacheKey, array $cacheTags): Collection
-    {
-        try {
-            // Prova prima con i tag se supportati
-            if ($this->supportsCacheTags()) {
-                return Cache::tags($cacheTags)->remember($cacheKey, self::CACHE_TTL, function () {
-                    return $this->fetchTechnologies();
-                });
-            }
-        } catch (\Exception $e) {
-            // Fallback senza tag se non supportati
+        // Se c'è una ricerca attiva, non usiamo la cache
+        if ($this->searchTerm) {
+            return $this->searchTechnologies();
         }
 
-        // Fallback: cache semplice senza tag
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
-            return $this->fetchTechnologies();
-        });
+        // Altrimenti usiamo la cache basata sulla categoria
+        if ($this->selectedCategory === 'all') {
+            return ProjectTechnology::getWithProjectsCount();
+        }
+
+        return ProjectTechnology::getByCategory($this->selectedCategory);
     }
 
     /**
-     * Fetch delle tecnologie dal database
+     * Cerca tecnologie senza cache
      */
-    private function fetchTechnologies(): Collection
+    private function searchTechnologies()
     {
-        return ProjectTechnology::query()
-            ->select('id', 'name', 'category', 'icon', 'color')
-            ->withCount('projects')
-            ->having('projects_count', '>', 0) // Solo tecnologie usate
-            ->orderBy('projects_count', 'desc')
+        $query = ProjectTechnology::query()
+            ->select(['id', 'name', 'category', 'icon', 'color'])
+            ->withCount('projects');
+
+        // Filtro per categoria
+        if ($this->selectedCategory !== 'all') {
+            $query->where('category', $this->selectedCategory);
+        }
+
+        // Filtro per termine di ricerca
+        if ($this->searchTerm) {
+            $query->where('name', 'like', '%' . $this->searchTerm . '%');
+        }
+
+        return $query->having('projects_count', '>', 0)
+            ->orderByDesc('projects_count')
             ->orderBy('name')
             ->get();
     }
 
     /**
-     * Mappatura delle categorie
+     * Aggiorna la categoria selezionata
      */
-    private function getCategoryMapping(): array
+    public function setCategory($category)
     {
-        return [
-            'Frontend' => 'Frontend',
-            'Backend' => 'Backend',
-            'Database' => 'Backend',
-            'Tool' => 'Tools & Cloud',
-            'Cloud' => 'Tools & Cloud',
-            'DevOps' => 'Tools & Cloud',
-            'Testing' => 'Concepts',
-            'Design' => 'Concepts',
-            'AI/ML' => 'Concepts',
-            'Framework' => 'Backend',
-            'Mobile' => 'Frontend',
-        ];
+        $this->selectedCategory = $category;
+        $this->searchTerm = ''; // Reset ricerca quando si cambia categoria
+        $this->dispatch('category-changed', category: $category);
     }
 
     /**
-     * Inizializza le sezioni vuote
+     * Reset dei filtri
      */
-    private function initializeSections(): array
+    public function resetFilters()
     {
-        return [
-            'Frontend' => collect(),
-            'Backend' => collect(),
-            'Tools & Cloud' => collect(),
-            'Concepts' => collect(),
-        ];
+        $this->selectedCategory = 'all';
+        $this->searchTerm = '';
+        $this->dispatch('filters-reset');
     }
 
     /**
-     * Processa e limita le sezioni
+     * Aggiorna il termine di ricerca
      */
-    private function processSections(array $sections): array
+    public function updatedSearchTerm()
     {
-        foreach ($sections as $key => $items) {
-            $sections[$key] = collect($items)
-                ->unique('name')
-                ->sortByDesc('projects_count')
-                ->values();
-
-            // Limita elementi se non in modalità "show all"
-            if (!$this->showAll && $sections[$key]->count() > $this->maxItemsPerSection) {
-                $sections[$key] = $sections[$key]->take($this->maxItemsPerSection);
-            }
-        }
-
-        return $sections;
+        // Debounce è gestito da Livewire con wire:model.live.debounce
+        $this->dispatch('search-updated', term: $this->searchTerm);
     }
 
     /**
-     * Toggle visualizzazione completa
+     * Recupera le statistiche generali
      */
-    public function toggleShowAll(): void
+    private function getStats()
     {
-        $this->showAll = !$this->showAll;
-
-        // Invalida la cache computed property
-        unset($this->skillsSections);
+        return $this->stats;
     }
 
     /**
-     * Verifica se ci sono tecnologie nascoste
+     * Invalida la cache quando necessario
      */
-    #[Computed]
-    public function hasHiddenItems(): bool
+    public function refreshCache()
     {
-        // Conta tecnologie totali senza limitazioni
-        $totalTechnologies = ProjectTechnology::has('projects')->count();
-
-        // Conta tecnologie mostrate
-        $shownTechnologies = collect($this->skillsSections)
-            ->map->count()
-            ->sum();
-
-        return $totalTechnologies > $shownTechnologies;
-    }
-
-    /**
-     * Ottieni statistiche delle tecnologie
-     */
-    #[Computed]
-    public function stats(): array
-    {
-        $cacheKey = 'skills_stats';
-        $cacheTags = ['skills_stats', 'project_technologies'];
-
-        try {
-            if ($this->supportsCacheTags()) {
-                return Cache::tags($cacheTags)->remember($cacheKey, self::CACHE_TTL, function () {
-                    return $this->calculateStats();
-                });
-            }
-        } catch (\Exception $e) {
-            // Fallback senza tag
-        }
-
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
-            return $this->calculateStats();
-        });
-    }
-
-    /**
-     * Calcola le statistiche
-     */
-    private function calculateStats(): array
-    {
-        return [
-            'total' => ProjectTechnology::count(),
-            'with_projects' => ProjectTechnology::has('projects')->count(),
-            'categories' => ProjectTechnology::distinct()
-                ->whereNotNull('category')
-                ->count('category'),
-            'most_used' => ProjectTechnology::withCount('projects')
-                ->orderBy('projects_count', 'desc')
-                ->first(),
-        ];
-    }
-
-    /**
-     * Verifica se il driver cache supporta i tag
-     */
-    private function supportsCacheTags(): bool
-    {
-        $driver = config('cache.default');
-        return in_array($driver, ['redis', 'memcached', 'dynamodb', 'array']);
-    }
-
-    /**
-     * Forza il refresh della cache (utile per testing)
-     */
-    public function refreshCache(): void
-    {
-        if ($this->supportsCacheTags()) {
-            Cache::tags(['skills_technologies', 'skills_stats'])->flush();
-        } else {
-            Cache::forget('skills_technologies');
-            Cache::forget('skills_stats');
-        }
-
-        // Invalida computed properties
-        unset($this->skillsSections);
-        unset($this->stats);
-
+        ProjectTechnology::clearAllCache();
         $this->dispatch('cache-refreshed');
     }
 
+    /**
+     * Render del componente
+     */
     public function render()
     {
-        return view('livewire.frontend.skills-and-techs');
+        return view('livewire.frontend.skills-and-techs', [
+            'technologies' => $this->technologies,
+            'categories' => $this->categories,
+            'stats' => $this->stats
+        ]);
     }
 }

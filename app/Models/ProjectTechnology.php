@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\Cacheable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class ProjectTechnology extends Model
 {
-    use HasFactory;
+    use Cacheable;
 
     protected $fillable = [
         'name',
@@ -23,151 +24,233 @@ class ProjectTechnology extends Model
 
     protected $casts = [
         'projects_count_cache' => 'integer',
-        'cache_updated_at' => 'datetime',
+        'cache_updated_at' => 'datetime'
     ];
 
+    // Cache configuration
+    private const CACHE_TTL = 3600; // 1 ora
+    private const CACHE_PREFIX = 'luca_macedone_cache_';
+
     /**
-     * Boot method for model events
+     * Boot del modello - gestisce eventi e cache
      */
     protected static function boot()
     {
         parent::boot();
 
-        static::creating(function ($technology) {
-            if (empty($technology->slug)) {
-                $technology->slug = Str::slug($technology->name);
-            }
-
-            if (empty($technology->color)) {
-                $technology->color = '#' . substr(md5($technology->name), 0, 6);
-            }
+        // Invalida cache quando viene salvato
+        static::saved(function ($model) {
+            $model->clearRelatedCache();
         });
 
-        // Clear cache quando una tecnologia viene modificata
-        static::saved(function ($technology) {
-            cache()->tags(['technologies', 'projects'])->flush();
+        // Invalida cache quando viene eliminato  
+        static::deleted(function ($model) {
+            $model->clearRelatedCache();
         });
 
-        static::deleted(function ($technology) {
-            cache()->tags(['technologies', 'projects'])->flush();
+        // Aggiorna il contatore dei progetti dopo il salvataggio
+        static::saved(function ($model) {
+            $model->updateProjectsCount();
         });
     }
 
     /**
-     * Relationships
+     * Relazione con i progetti
      */
     public function projects(): BelongsToMany
     {
-        return $this->belongsToMany(
-            Project::class,
-            'project_technology_pivot',
-            'project_technology_id',
-            'project_id'
-        );
+        return $this->belongsToMany(Project::class, 'project_technology_pivot');
     }
 
     /**
-     * Scopes
+     * Pulisce tutte le cache correlate
      */
-    public function scopeByCategory($query, $category)
+    public function clearRelatedCache(): void
     {
-        return $query->where('category', $category);
-    }
+        $cacheKeys = [
+            self::CACHE_PREFIX . 'skills_technologies',
+            self::CACHE_PREFIX . 'skills_stats',
+            self::CACHE_PREFIX . 'admin_technologies_types',
+            self::CACHE_PREFIX . 'technology_' . $this->id,
+            self::CACHE_PREFIX . 'technologies_by_category_' . Str::slug($this->category),
+        ];
 
-    public function scopeWithProjectCount($query)
-    {
-        return $query->withCount('projects');
-    }
+        foreach ($cacheKeys as $key) {
+            Cache::forget($key);
+        }
 
-    public function scopeOrdered($query)
-    {
-        return $query->orderBy('category')
-            ->orderBy('name');
-    }
-
-    public function scopePopular($query, $limit = 10)
-    {
-        return $query->orderBy('projects_count_cache', 'desc')
-            ->limit($limit);
+        // Pulisce anche la cache delle categorie
+        $this->clearCategoriesCache();
     }
 
     /**
-     * Get icon class or URL
+     * Pulisce la cache delle categorie
      */
-    public function getIconClassAttribute(): string
+    private function clearCategoriesCache(): void
     {
-        // Se l'icona è una classe (es. "fab fa-laravel")
-        if (strpos($this->icon, 'fa-') !== false || strpos($this->icon, 'icon-') !== false) {
-            return $this->icon;
+        $categories = self::distinct('category')->pluck('category');
+
+        foreach ($categories as $category) {
+            Cache::forget(self::CACHE_PREFIX . 'technologies_category_' . Str::slug($category));
         }
 
-        // Se l'icona è un URL
-        if (filter_var($this->icon, FILTER_VALIDATE_URL)) {
-            return 'url:' . $this->icon;
-        }
-
-        // Se l'icona è un path locale
-        if ($this->icon && file_exists(public_path($this->icon))) {
-            return 'url:' . asset($this->icon);
-        }
-
-        // Default icon
-        return 'fas fa-code';
+        Cache::forget(self::CACHE_PREFIX . 'technologies_categories_list');
     }
 
     /**
-     * Update cached project count
+     * Recupera tutte le tecnologie con conteggio progetti (con cache)
      */
-    public function updateProjectCount()
+    public static function getWithProjectsCount()
     {
+        $cacheKey = self::CACHE_PREFIX . 'skills_technologies';
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            return self::query()
+                ->select(['id', 'name', 'category', 'icon', 'color'])
+                ->withCount('projects')
+                ->having('projects_count', '>', 0)
+                ->orderByDesc('projects_count')
+                ->orderBy('name')
+                ->get();
+        });
+    }
+
+    /**
+     * Recupera tecnologie per categoria (con cache)
+     */
+    public static function getByCategory(string $category)
+    {
+        $cacheKey = self::CACHE_PREFIX . 'technologies_category_' . Str::slug($category);
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($category) {
+            return self::where('category', $category)
+                ->withCount('projects')
+                ->orderByDesc('projects_count')
+                ->orderBy('name')
+                ->get();
+        });
+    }
+
+    /**
+     * Recupera statistiche sulle competenze (con cache)
+     */
+    public static function getSkillsStats(): array
+    {
+        $cacheKey = self::CACHE_PREFIX . 'skills_stats';
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            $totalProjects = Project::published()->count();
+            $totalTechnologies = self::count();
+            $totalClients = Project::published()
+                ->whereNotNull('client')
+                ->where('client', '!=', '')
+                ->distinct('client')
+                ->count();
+
+            return [
+                'total_projects' => $totalProjects,
+                'total_technologies' => $totalTechnologies,
+                'total_clients' => $totalClients,
+                'last_updated' => now()
+            ];
+        });
+    }
+
+    /**
+     * Aggiorna il contatore dei progetti in cache
+     */
+    public function updateProjectsCount(): void
+    {
+        $count = $this->projects()->count();
+
         $this->update([
-            'projects_count_cache' => $this->projects()->count(),
+            'projects_count_cache' => $count,
             'cache_updated_at' => now()
         ]);
     }
 
     /**
-     * Get projects count (from cache or fresh)
+     * Recupera una singola tecnologia (con cache)
      */
-    public function getProjectsCountAttribute(): int
+    public static function findCached($id)
     {
-        // Se il cache è vecchio di più di 24 ore, aggiorna
-        if (!$this->cache_updated_at || $this->cache_updated_at->diffInHours(now()) > 24) {
-            $this->updateProjectCount();
-            $this->refresh();
-        }
+        $cacheKey = self::CACHE_PREFIX . 'technology_' . $id;
 
-        return $this->projects_count_cache;
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($id) {
+            return self::with('projects')->find($id);
+        });
     }
 
     /**
-     * Get color with transparency
+     * Invalida tutta la cache delle tecnologie
      */
-    public function getColorWithOpacityAttribute($opacity = 0.1): string
+    public static function clearAllCache(): void
     {
-        $hex = str_replace('#', '', $this->color);
+        $patterns = [
+            'skills_technologies',
+            'skills_stats',
+            'admin_technologies_types',
+            'technology_*',
+            'technologies_*'
+        ];
 
-        if (strlen($hex) == 3) {
-            $r = hexdec(substr($hex, 0, 1) . substr($hex, 0, 1));
-            $g = hexdec(substr($hex, 1, 1) . substr($hex, 1, 1));
-            $b = hexdec(substr($hex, 2, 1) . substr($hex, 2, 1));
+        foreach ($patterns as $pattern) {
+            // Per cache driver file/database, dobbiamo iterare manualmente
+            // Non possiamo usare wildcards come con Redis
+            self::clearCacheByPattern($pattern);
+        }
+    }
+
+    /**
+     * Helper per pulire cache con pattern
+     */
+    private static function clearCacheByPattern(string $pattern): void
+    {
+        $prefix = self::CACHE_PREFIX;
+
+        if (str_contains($pattern, '*')) {
+            // Per pattern con wildcard, dobbiamo gestire manualmente
+            // Recupera tutte le chiavi conosciute e le invalida
+            if ($pattern === 'technology_*') {
+                $ids = self::pluck('id');
+                foreach ($ids as $id) {
+                    Cache::forget($prefix . 'technology_' . $id);
+                }
+            } elseif ($pattern === 'technologies_*') {
+                $categories = self::distinct('category')->pluck('category');
+                foreach ($categories as $category) {
+                    Cache::forget($prefix . 'technologies_category_' . Str::slug($category));
+                }
+                Cache::forget($prefix . 'technologies_categories_list');
+            }
         } else {
-            $r = hexdec(substr($hex, 0, 2));
-            $g = hexdec(substr($hex, 2, 2));
-            $b = hexdec(substr($hex, 4, 2));
+            Cache::forget($prefix . $pattern);
         }
-
-        return "rgba($r, $g, $b, $opacity)";
     }
 
     /**
-     * Group technologies by category
+     * Scope per tecnologie pubblicate
      */
-    public static function groupedByCategory()
+    public function scopePublished($query)
     {
-        return static::orderBy('category')
-            ->orderBy('name')
-            ->get()
-            ->groupBy('category');
+        return $query->whereHas('projects', function ($q) {
+            $q->where('status', 'published');
+        });
+    }
+
+    /**
+     * Accessor per il nome formattato
+     */
+    public function getFormattedNameAttribute(): string
+    {
+        return ucfirst($this->name);
+    }
+
+    /**
+     * Accessor per il colore con fallback
+     */
+    public function getColorAttribute($value): string
+    {
+        return $value ?: '#6b7280'; // Grigio di default
     }
 }
