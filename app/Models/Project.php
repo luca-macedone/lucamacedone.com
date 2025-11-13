@@ -73,11 +73,11 @@ class Project extends Model
 
         // Clear cache quando un progetto viene modificato
         static::saved(function ($project) {
-            cache()->tags(['projects'])->flush();
+            $project->clearProjectsCache();
         });
 
         static::deleted(function ($project) {
-            cache()->tags(['projects'])->flush();
+            static::clearProjectsCache();
         });
     }
 
@@ -461,7 +461,12 @@ class Project extends Model
     public function syncCategories(array $categoryIds)
     {
         $this->categories()->sync($categoryIds);
-        cache()->tags(['projects', 'categories'])->flush();
+        $this->clearProjectsCache();
+
+        // Invalida anche cache delle categorie
+        if (class_exists('App\Models\ProjectCategory')) {
+            ProjectCategory::clearCategoriesCache();
+        }
     }
 
     /**
@@ -470,6 +475,43 @@ class Project extends Model
     public function syncTechnologies(array $technologyIds)
     {
         $this->technologies()->sync($technologyIds);
-        cache()->tags(['projects', 'technologies'])->flush();
+        $this->clearProjectsCache();
+
+        // Invalida anche cache delle tecnologie
+        if (class_exists('App\Models\ProjectTechnology')) {
+            ProjectTechnology::clearAllCache();
+        }
+    }
+
+    /**
+     * Pulisce tutte le cache relative ai progetti
+     * Compatibile con driver file (non usa tags)
+     */
+    public static function clearProjectsCache(): void
+    {
+        $cacheKeys = [
+            // Cache dei progetti
+            'featured_projects',
+            'published_projects',
+            'homepage_projects',
+            'recent_projects',
+            'all_projects',
+            'portfolio_featured_projects',
+
+            // Cache delle statistiche
+            'homepage_stats',
+            'portfolio_stats',
+            'project_stats',
+        ];
+
+        $prefix = static::$cachePrefix ?? 'luca_macedone_cache_';
+
+        foreach ($cacheKeys as $key) {
+            \Cache::forget($prefix . $key);
+        }
+
+        // Invalida anche le chiavi definite nel trait
+        static::cacheForget('featured_projects');
+        static::cacheForget('published_projects');
     }
 }

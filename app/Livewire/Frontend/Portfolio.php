@@ -4,12 +4,17 @@ namespace App\Livewire\Frontend;
 
 use App\Models\Project;
 use App\Models\ProjectCategory;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class Portfolio extends Component
 {
     use WithPagination;
+
+    // Cache configuration
+    private const CACHE_TTL = 3600; // 1 ora
+    private const CACHE_PREFIX = 'luca_macedone_cache_';
 
     public $search = '';
     public $categoryFilter = '';
@@ -98,35 +103,52 @@ class Portfolio extends Component
 
     public function getFeaturedProjects()
     {
-        return Project::with(['categories', 'technologies'])
-            ->where('status', 'published')
-            ->where('is_featured', true)
-            ->orderBy('sort_order', 'asc')
-            ->limit(6)
-            ->get();
+        $cacheKey = self::CACHE_PREFIX . 'portfolio_featured_projects';
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            return Project::with(['categories', 'technologies'])
+                ->where('status', 'published')
+                ->where('is_featured', true)
+                ->orderBy('sort_order', 'asc')
+                ->limit(6)
+                ->get();
+        });
     }
 
     public function getStats()
     {
-        return [
-            'total_projects' => Project::where('status', 'published')->count(),
-            'categories_count' => ProjectCategory::whereHas('projects', function ($query) {
-                $query->where('status', 'published');
-            })->count(),
-            'featured_count' => Project::where('status', 'published')
-                ->where('is_featured', true)
-                ->count(),
-        ];
+        $cacheKey = self::CACHE_PREFIX . 'portfolio_stats';
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            return [
+                'total_projects' => Project::where('status', 'published')->count(),
+                'categories_count' => ProjectCategory::whereHas('projects', function ($query) {
+                    $query->where('status', 'published');
+                })->count(),
+                'featured_count' => Project::where('status', 'published')
+                    ->where('is_featured', true)
+                    ->count(),
+            ];
+        });
+    }
+
+    public function getCategories()
+    {
+        $cacheKey = self::CACHE_PREFIX . 'portfolio_categories';
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            return ProjectCategory::has('projects')
+                ->withCount('projects')
+                ->ordered()
+                ->get();
+        });
     }
 
     public function render()
     {
         return view('livewire.frontend.portfolio', [
             'projects' => $this->getProjects(),
-            'categories' => ProjectCategory::has('projects')
-                ->withCount('projects')
-                ->ordered()
-                ->get(),
+            'categories' => $this->getCategories(),
         ])->layout('layouts.guest');
     }
 }

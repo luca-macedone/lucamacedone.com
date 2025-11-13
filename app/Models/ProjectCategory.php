@@ -30,6 +30,15 @@ class ProjectCategory extends Model
                 $category->slug = Str::slug($category->name);
             }
         });
+
+        // Invalida cache quando la categoria viene modificata
+        static::saved(function ($category) {
+            static::clearCategoriesCache();
+        });
+
+        static::deleted(function ($category) {
+            static::clearCategoriesCache();
+        });
     }
 
     public function projects(): BelongsToMany
@@ -40,5 +49,25 @@ class ProjectCategory extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order')->orderBy('name');
+    }
+
+    /**
+     * Pulisce tutte le cache relative alle categorie
+     * Compatibile con driver file (non usa tags)
+     */
+    public static function clearCategoriesCache(): void
+    {
+        $cacheKeys = [
+            'all_categories',
+            'categories_with_projects',
+            'categories_ordered',
+            'portfolio_categories',
+        ];
+
+        $prefix = static::$cachePrefix ?? 'luca_macedone_cache_';
+
+        foreach ($cacheKeys as $key) {
+            \Cache::forget($prefix . $key);
+        }
     }
 }

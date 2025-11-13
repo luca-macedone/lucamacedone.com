@@ -5,55 +5,25 @@ namespace App\Livewire\Frontend;
 
 use App\Models\Project;
 use App\Models\ProjectTechnology;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class Welcome extends Component
 {
+    // Cache configuration
+    private const CACHE_TTL = 3600; // 1 ora
+    private const CACHE_PREFIX = 'luca_macedone_cache_';
+
     /**
-     * Ottieni progetti in evidenza per la homepage
+     * Ottieni progetti in evidenza per la homepage (con cache)
      */
     public function getFeaturedProjects()
     {
-        // Verifica prima se i metodi esistono e sono configurati correttamente
-        try {
-            return Project::query()
-                ->with(['categories:id,name,color', 'technologies:id,name,icon'])
-                ->select([
-                    'id',
-                    'title',
-                    'slug',
-                    'description',
-                    'featured_image',
-                    'client',
-                    'status',
-                    'is_featured',
-                    'sort_order',
-                    'created_at'
-                ])
-                ->where('status', 'published')
-                ->where('is_featured', true)
-                ->orderBy('sort_order', 'asc')
-                ->orderBy('created_at', 'desc')
-                ->limit(4)
-                ->get();
-        } catch (\Exception $e) {
-            // Se c'è un errore, ritorna collezione vuota
-            \Log::error('Error fetching featured projects: ' . $e->getMessage());
-            return collect([]);
-        }
-    }
+        $cacheKey = self::CACHE_PREFIX . 'featured_projects';
 
-    /**
-     * Ottieni progetti per la homepage (featured + recenti se necessario)
-     */
-    public function getProjectsForHomepage()
-    {
-        $featured = $this->getFeaturedProjects();
-
-        // Se non ci sono abbastanza progetti featured, completa con i più recenti
-        if ($featured->count() < 4) {
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
             try {
-                $latest = Project::query()
+                return Project::query()
                     ->with(['categories:id,name,color', 'technologies:id,name,icon'])
                     ->select([
                         'id',
@@ -68,62 +38,107 @@ class Welcome extends Component
                         'created_at'
                     ])
                     ->where('status', 'published')
-                    ->whereNotIn('id', $featured->pluck('id')->toArray())
+                    ->where('is_featured', true)
+                    ->orderBy('sort_order', 'asc')
                     ->orderBy('created_at', 'desc')
-                    ->limit(4 - $featured->count())
+                    ->limit(4)
                     ->get();
-
-                return $featured->merge($latest);
             } catch (\Exception $e) {
-                \Log::error('Error fetching latest projects: ' . $e->getMessage());
-                return $featured;
+                \Log::error('Error fetching featured projects: ' . $e->getMessage());
+                return collect([]);
             }
-        }
-
-        return $featured;
+        });
     }
 
     /**
-     * Ottieni statistiche per la homepage
+     * Ottieni progetti per la homepage (featured + recenti se necessario) (con cache)
+     */
+    public function getProjectsForHomepage()
+    {
+        $cacheKey = self::CACHE_PREFIX . 'homepage_projects';
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            $featured = $this->getFeaturedProjects();
+
+            // Se non ci sono abbastanza progetti featured, completa con i più recenti
+            if ($featured->count() < 4) {
+                try {
+                    $latest = Project::query()
+                        ->with(['categories:id,name,color', 'technologies:id,name,icon'])
+                        ->select([
+                            'id',
+                            'title',
+                            'slug',
+                            'description',
+                            'featured_image',
+                            'client',
+                            'status',
+                            'is_featured',
+                            'sort_order',
+                            'created_at'
+                        ])
+                        ->where('status', 'published')
+                        ->whereNotIn('id', $featured->pluck('id')->toArray())
+                        ->orderBy('created_at', 'desc')
+                        ->limit(4 - $featured->count())
+                        ->get();
+
+                    return $featured->merge($latest);
+                } catch (\Exception $e) {
+                    \Log::error('Error fetching latest projects: ' . $e->getMessage());
+                    return $featured;
+                }
+            }
+
+            return $featured;
+        });
+    }
+
+    /**
+     * Ottieni statistiche per la homepage (con cache)
      */
     public function getStats()
     {
-        try {
-            // Calcola gli anni di esperienza
-            $startYear = config('app.experience_start_year', 2018);
-            $yearsExperience = now()->year - $startYear;
+        $cacheKey = self::CACHE_PREFIX . 'homepage_stats';
 
-            // Conta progetti pubblicati
-            $totalProjects = Project::where('status', 'published')->count();
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            try {
+                // Calcola gli anni di esperienza
+                $startYear = config('app.experience_start_year', 2018);
+                $yearsExperience = now()->year - $startYear;
 
-            // Conta tecnologie utilizzate
-            $technologiesUsed = ProjectTechnology::count();
+                // Conta progetti pubblicati
+                $totalProjects = Project::where('status', 'published')->count();
 
-            // Conta clienti serviti (distinct)
-            $clientsServed = Project::query()
-                ->whereNotNull('client')
-                ->where('client', '!=', '')
-                ->where('status', 'published')
-                ->distinct()
-                ->count('client');
+                // Conta tecnologie utilizzate
+                $technologiesUsed = ProjectTechnology::count();
 
-            return [
-                'total_projects' => $totalProjects,
-                'years_experience' => $yearsExperience,
-                'technologies_used' => $technologiesUsed,
-                'clients_served' => $clientsServed,
-            ];
-        } catch (\Exception $e) {
-            \Log::error('Error fetching stats: ' . $e->getMessage());
+                // Conta clienti serviti (distinct)
+                $clientsServed = Project::query()
+                    ->whereNotNull('client')
+                    ->where('client', '!=', '')
+                    ->where('status', 'published')
+                    ->distinct()
+                    ->count('client');
 
-            // Ritorna valori default in caso di errore
-            return [
-                'total_projects' => 0,
-                'years_experience' => now()->year - 2018,
-                'technologies_used' => 0,
-                'clients_served' => 0,
-            ];
-        }
+                return [
+                    'total_projects' => $totalProjects,
+                    'years_experience' => $yearsExperience,
+                    'technologies_used' => $technologiesUsed,
+                    'clients_served' => $clientsServed,
+                ];
+            } catch (\Exception $e) {
+                \Log::error('Error fetching stats: ' . $e->getMessage());
+
+                // Ritorna valori default in caso di errore
+                return [
+                    'total_projects' => 0,
+                    'years_experience' => now()->year - 2018,
+                    'technologies_used' => 0,
+                    'clients_served' => 0,
+                ];
+            }
+        });
     }
 
     /**
