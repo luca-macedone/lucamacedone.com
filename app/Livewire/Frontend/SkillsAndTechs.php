@@ -93,7 +93,6 @@ class SkillsAndTechs extends Component
             $technologies = ProjectTechnology::query()
                 ->select(['id', 'name', 'category', 'icon', 'color'])
                 ->withCount('projects')
-                ->having('projects_count', '>', 0)
                 ->orderBy('name')
                 ->get();
 
@@ -108,6 +107,9 @@ class SkillsAndTechs extends Component
                 $categoryMapping = [
                     'frontend' => 'Frontend',
                     'backend' => 'Backend',
+                    'database' => 'Database',
+                    'devops' => 'Tools & Cloud',
+                    'testing' => 'Tools & Cloud',
                     'tools & cloud' => 'Tools & Cloud',
                     'tools and cloud' => 'Tools & Cloud',
                     'tools-cloud' => 'Tools & Cloud',
@@ -161,8 +163,7 @@ class SkillsAndTechs extends Component
             $query->where('name', 'like', '%' . $this->searchTerm . '%');
         }
 
-        return $query->having('projects_count', '>', 0)
-            ->orderByDesc('projects_count')
+        return $query->orderByDesc('projects_count')
             ->orderBy('name')
             ->get();
     }

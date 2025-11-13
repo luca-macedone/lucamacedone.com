@@ -4,7 +4,7 @@
         <h2 class="text-4xl text-center">Skills & Technologies</h2>
         <p class="text-center max-w-[550px]">Here are the technologies and tools I work with to bring ideas to life.</p>
 
-        <div class="pt-5 grid grid-cols-1 lg:grid-cols-4 grid-flow-row gap-2.5 w-[550px] lg:w-full">
+        <div class="pt-5 grid grid-cols-1 lg:grid-cols-5 grid-flow-row gap-2.5 w-[550px] lg:w-full">
             {{-- Frontend Section --}}
             <div
                 class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background">
@@ -47,6 +47,29 @@
                         </li>
                     @empty
                         <li class="text-muted text-sm">No technologies added yet</li>
+                    @endforelse
+                </ul>
+            </div>
+
+            {{-- Database Section --}}
+            <div
+                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background">
+                <h5 class="font-bold text-center">Database</h5>
+                <ul class="grid grid-flow-row grid-cols-2 gap-2.5">
+                    @forelse($this->skillsSections['Database'] ?? [] as $tech)
+                        <li class="flex justify-center w-full items-center gap-2 text-sm border-2 rounded-md p-1"
+                            style="border-color: {{ $tech['color'] }}">
+                            @if ($tech['icon'])
+                                <span class="text-xs" style="color: {{ $tech['color'] }}">
+                                    {!! sanitizeHtml($tech['icon'], 'strict') !!}
+                                </span>
+                            @else
+                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $tech['color'] }}"></span>
+                            @endif
+                            <span>{{ $tech['name'] }}</span>
+                        </li>
+                    @empty
+                        <li class="text-muted text-sm">No databases added yet</li>
                     @endforelse
                 </ul>
             </div>
