@@ -97,8 +97,8 @@ class SkillsAndTechs extends Component
                 ->orderBy('name')
                 ->get();
 
-            // Raggruppa per categoria
-            return $technologies->groupBy('category')->toArray();
+            // Raggruppa per categoria (mantieni come Collection)
+            return $technologies->groupBy('category');
         });
     }
 
