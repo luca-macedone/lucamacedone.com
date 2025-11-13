@@ -12,15 +12,15 @@
                 <ul class="grid grid-flow-row grid-cols-2 gap-2.5">
                     @forelse($this->skillsSections['Frontend'] ?? [] as $tech)
                         <li class="flex justify-center w-full items-center gap-2 text-sm border-2 rounded-md p-1"
-                            style="border-color: {{ $tech->color }}">
-                            @if ($tech->icon)
-                                <span class="text-xs" style="color: {{ $tech->color }}">
-                                    {!! sanitizeHtml($tech->icon, 'strict') !!}
+                            style="border-color: {{ $tech['color'] }}">
+                            @if ($tech['icon'])
+                                <span class="text-xs" style="color: {{ $tech['color'] }}">
+                                    {!! sanitizeHtml($tech['icon'], 'strict') !!}
                                 </span>
                             @else
-                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $tech->color }}"></span>
+                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $tech['color'] }}"></span>
                             @endif
-                            <span>{{ $tech->name }}</span>
+                            <span>{{ $tech['name'] }}</span>
                         </li>
                     @empty
                         <li class="text-muted text-sm">No technologies added yet</li>
@@ -35,15 +35,15 @@
                 <ul class="grid grid-flow-row grid-cols-2 gap-2.5 ">
                     @forelse($this->skillsSections['Backend'] ?? [] as $tech)
                         <li class="flex justify-center w-full items-center gap-2 text-sm border-2 rounded-md p-1"
-                            style="border-color: {{ $tech->color }}">
-                            @if ($tech->icon)
-                                <span class="text-xs" style="color: {{ $tech->color }}">
-                                    {!! $tech->icon !!}
+                            style="border-color: {{ $tech['color'] }}">
+                            @if ($tech['icon'])
+                                <span class="text-xs" style="color: {{ $tech['color'] }}">
+                                    {!! sanitizeHtml($tech['icon'], 'strict') !!}
                                 </span>
                             @else
-                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $tech->color }}"></span>
+                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $tech['color'] }}"></span>
                             @endif
-                            <span>{{ $tech->name }}</span>
+                            <span>{{ $tech['name'] }}</span>
                         </li>
                     @empty
                         <li class="text-muted text-sm">No technologies added yet</li>
@@ -58,16 +58,16 @@
                 <ul class="grid grid-flow-row grid-cols-2 gap-2.5">
                     @forelse($this->skillsSections['Tools & Cloud'] ?? [] as $tech)
                         <li class="flex justify-center w-full items-center gap-2 text-sm border-2 rounded-md p-1"
-                            style="border-color: {{ $tech->color }}">
-                            @if ($tech->icon)
-                                <span class="text-xs" style="color: {{ $tech->color }}">
-                                    {!! $tech->icon !!}
+                            style="border-color: {{ $tech['color'] }}">
+                            @if ($tech['icon'])
+                                <span class="text-xs" style="color: {{ $tech['color'] }}">
+                                    {!! sanitizeHtml($tech['icon'], 'strict') !!}
                                 </span>
                             @else
                                 <span class="w-2 h-2 rounded-full"
-                                    style="background-color: {{ $tech->color }}"></span>
+                                    style="background-color: {{ $tech['color'] }}"></span>
                             @endif
-                            <span>{{ $tech->name }}</span>
+                            <span>{{ $tech['name'] }}</span>
                         </li>
                     @empty
                         <li class="text-muted text-sm">No tools added yet</li>
@@ -82,16 +82,16 @@
                 <ul class="grid grid-flow-row grid-cols-2 gap-2.5">
                     @forelse($this->skillsSections['Concepts'] ?? [] as $tech)
                         <li class="flex justify-center w-full items-center gap-2 text-sm border-2 rounded-md p-1"
-                            style="border-color: {{ $tech->color }}">
-                            @if ($tech->icon)
-                                <span class="text-xs" style="color: {{ $tech->color }}">
-                                    {!! $tech->icon !!}
+                            style="border-color: {{ $tech['color'] }}">
+                            @if ($tech['icon'])
+                                <span class="text-xs" style="color: {{ $tech['color'] }}">
+                                    {!! sanitizeHtml($tech['icon'], 'strict') !!}
                                 </span>
                             @else
                                 <span class="w-2 h-2 rounded-full"
-                                    style="background-color: {{ $tech->color }}"></span>
+                                    style="background-color: {{ $tech['color'] }}"></span>
                             @endif
-                            <span>{{ $tech->name }}</span>
+                            <span>{{ $tech['name'] }}</span>
                         </li>
                     @empty
                         <li class="text-muted text-sm">No concepts added yet</li>

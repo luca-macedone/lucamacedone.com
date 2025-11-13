@@ -61,6 +61,16 @@ class Portfolio extends Component
         $this->resetPage();
     }
 
+    public function resetFilters()
+    {
+        $this->clearFilters();
+    }
+
+    public function toggleSortDirection()
+    {
+        $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+    }
+
     public function getProjects()
     {
         // Usa withBasicInfo per il frontend pubblico
@@ -79,17 +89,18 @@ class Portfolio extends Component
 
         // Ordinamento
         switch ($this->sortBy) {
-            case 'oldest':
-                $query->oldest();
+            case 'created_at':
+                $query->orderBy('created_at', $this->sortDirection);
                 break;
-            case 'name':
-                $query->orderBy('title', 'asc');
+            case 'title':
+                $query->orderBy('title', $this->sortDirection);
                 break;
             case 'featured':
-                $query->featured()->ordered();
+                $query->where('is_featured', true)->orderBy('sort_order', 'asc');
                 break;
-            default: // 'recent'
-                $query->latest();
+            case 'sort_order':
+            default:
+                $query->orderBy('sort_order', $this->sortDirection);
                 break;
         }
 
@@ -123,6 +134,7 @@ class Portfolio extends Component
     {
         return view('livewire.frontend.portfolio', [
             'projects' => $this->getProjects(),
+            'featuredProjects' => $this->getFeaturedProjects(),
             'categories' => ProjectCategory::has('projects')
                 ->withCount('projects')
                 ->ordered()
