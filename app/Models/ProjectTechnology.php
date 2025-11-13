@@ -41,16 +41,16 @@ class ProjectTechnology extends Model
         // Invalida cache quando viene salvato
         static::saved(function ($model) {
             $model->clearRelatedCache();
+            // Aggiorna il contatore dei progetti solo se non abbiamo appena aggiornato il contatore
+            // (per evitare loop infiniti)
+            if (!$model->wasChanged('projects_count_cache')) {
+                $model->updateProjectsCountQuietly();
+            }
         });
 
-        // Invalida cache quando viene eliminato  
+        // Invalida cache quando viene eliminato
         static::deleted(function ($model) {
             $model->clearRelatedCache();
-        });
-
-        // Aggiorna il contatore dei progetti dopo il salvataggio
-        static::saved(function ($model) {
-            $model->updateProjectsCount();
         });
     }
 
@@ -165,6 +165,19 @@ class ProjectTechnology extends Model
         $count = $this->projects()->count();
 
         $this->update([
+            'projects_count_cache' => $count,
+            'cache_updated_at' => now()
+        ]);
+    }
+
+    /**
+     * Aggiorna il contatore dei progetti senza scatenare eventi
+     */
+    protected function updateProjectsCountQuietly(): void
+    {
+        $count = $this->projects()->count();
+
+        $this->updateQuietly([
             'projects_count_cache' => $count,
             'cache_updated_at' => now()
         ]);
