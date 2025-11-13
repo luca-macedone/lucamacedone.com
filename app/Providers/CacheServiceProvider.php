@@ -14,14 +14,33 @@ class CacheServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Registra macro per cache senza tags
+        // Non usiamo Cache facade qui perché non è ancora disponibile
+        // Le macro verranno registrate nel boot()
+    }
+
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
+    {
+        // Registra le macro DOPO che il servizio cache è disponibile
+        $this->registerCacheMacros();
+        $this->configureCacheWarming();
+        $this->configureRateLimiting();
+        $this->registerCacheCommands();
+    }
+
+    /**
+     * Registra le macro per la cache
+     */
+    private function registerCacheMacros(): void
+    {
+        // Ora possiamo usare Cache facade perché siamo nel boot()
         Cache::macro('rememberWithoutTags', function ($key, $ttl, $callback) {
-            // Usa direttamente il driver senza tags
             return Cache::driver(config('cache.default'))
                 ->remember($key, $ttl, $callback);
         });
 
-        // Registra macro per forget multiplo
         Cache::macro('forgetMultiple', function (array $keys) {
             $count = 0;
             foreach ($keys as $key) {
@@ -32,21 +51,10 @@ class CacheServiceProvider extends ServiceProvider
             return $count;
         });
 
-        // Registra macro per verificare il supporto dei tags
         Cache::macro('supportsTags', function () {
             $driver = config('cache.default');
             return in_array($driver, ['redis', 'memcached', 'dynamodb']);
         });
-    }
-
-    /**
-     * Bootstrap services.
-     */
-    public function boot(): void
-    {
-        $this->configureCacheWarming();
-        $this->configureRateLimiting();
-        $this->registerCacheCommands();
     }
 
     /**

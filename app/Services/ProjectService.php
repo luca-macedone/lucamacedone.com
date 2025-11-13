@@ -22,15 +22,16 @@ class ProjectService
 
         DB::beginTransaction();
         try {
-            $project->is_published = !$project->is_published;
+            // Toggle tra 'published' e 'draft'
+            $project->status = ($project->status === 'published') ? 'draft' : 'published';
             $project->save();
 
             DB::commit();
 
             return [
                 'success' => true,
-                'is_published' => $project->is_published,
-                'message' => $project->is_published
+                'status' => $project->status,
+                'message' => $project->status === 'published'
                     ? 'Project published successfully'
                     : 'Project set to draft successfully'
             ];
@@ -133,8 +134,9 @@ class ProjectService
 
         DB::beginTransaction();
         try {
+            $status = $publish ? 'published' : 'draft';
             $updatedCount = Project::whereIn('id', $projectIds)
-                ->update(['is_published' => $publish]);
+                ->update(['status' => $status]);
 
             DB::commit();
 
@@ -256,8 +258,18 @@ class ProjectService
             });
         }
 
-        if (isset($filters['is_published'])) {
-            $query->where('is_published', $filters['is_published']);
+        // Filtra per status invece di is_published
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Oppure se vuoi filtrare solo pubblicati/non pubblicati
+        if (isset($filters['published'])) {
+            if ($filters['published']) {
+                $query->where('status', 'published');
+            } else {
+                $query->where('status', 'draft');
+            }
         }
 
         if (isset($filters['is_featured'])) {
