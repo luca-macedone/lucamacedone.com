@@ -28,7 +28,7 @@ class SkillsAndTechs extends Component
     /**
      * Recupera le statistiche con cache
      */
-    #[Computed(cache: true)]
+    #[Computed]
     public function stats()
     {
         return ProjectTechnology::getSkillsStats();
@@ -37,7 +37,7 @@ class SkillsAndTechs extends Component
     /**
      * Recupera le categorie disponibili
      */
-    #[Computed(cache: true)]
+    #[Computed]
     public function categories()
     {
         $cacheKey = self::CACHE_PREFIX . 'technologies_categories_list';
@@ -84,7 +84,7 @@ class SkillsAndTechs extends Component
     /**
      * Recupera le tecnologie raggruppate per sezioni
      */
-    #[Computed(cache: true)]
+    #[Computed]
     public function skillsSections()
     {
         $cacheKey = self::CACHE_PREFIX . 'skills_sections';
