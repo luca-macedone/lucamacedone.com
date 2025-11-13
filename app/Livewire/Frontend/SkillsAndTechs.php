@@ -82,6 +82,27 @@ class SkillsAndTechs extends Component
     }
 
     /**
+     * Recupera le tecnologie raggruppate per sezioni
+     */
+    #[Computed(cache: true)]
+    public function skillsSections()
+    {
+        $cacheKey = self::CACHE_PREFIX . 'skills_sections';
+
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
+            $technologies = ProjectTechnology::query()
+                ->select(['id', 'name', 'category', 'icon', 'color'])
+                ->withCount('projects')
+                ->having('projects_count', '>', 0)
+                ->orderBy('name')
+                ->get();
+
+            // Raggruppa per categoria
+            return $technologies->groupBy('category')->toArray();
+        });
+    }
+
+    /**
      * Cerca tecnologie senza cache
      */
     private function searchTechnologies()
