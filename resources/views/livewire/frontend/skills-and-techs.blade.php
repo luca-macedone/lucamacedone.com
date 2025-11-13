@@ -4,10 +4,10 @@
         <h2 class="text-4xl text-center">Skills & Technologies</h2>
         <p class="text-center max-w-[550px]">Here are the technologies and tools I work with to bring ideas to life.</p>
 
-        <div class="pt-5 grid grid-cols-1 lg:grid-cols-5 grid-flow-row gap-2.5 w-[550px] lg:w-full">
+        <div class="pt-5 grid grid-cols-1 lg:grid-cols-6 grid-flow-row grid-rows-2 gap-2.5 w-[550px] lg:w-full">
             {{-- Frontend Section --}}
             <div
-                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background">
+                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background col-span-1 lg:col-span-3">
                 <h5 class="font-bold text-center">Frontend</h5>
                 <ul class="grid grid-flow-row grid-cols-2 gap-2.5">
                     @forelse($this->skillsSections['Frontend'] ?? [] as $tech)
@@ -18,7 +18,8 @@
                                     {!! sanitizeHtml($tech['icon'], 'strict') !!}
                                 </span>
                             @else
-                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $tech['color'] }}"></span>
+                                <span class="w-2 h-2 rounded-full"
+                                    style="background-color: {{ $tech['color'] }}"></span>
                             @endif
                             <span>{{ $tech['name'] }}</span>
                         </li>
@@ -30,7 +31,7 @@
 
             {{-- Backend Section --}}
             <div
-                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background">
+                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background col-span-1 lg:col-span-3">
                 <h5 class="font-bold text-center">Backend</h5>
                 <ul class="grid grid-flow-row grid-cols-2 gap-2.5 ">
                     @forelse($this->skillsSections['Backend'] ?? [] as $tech)
@@ -41,7 +42,8 @@
                                     {!! sanitizeHtml($tech['icon'], 'strict') !!}
                                 </span>
                             @else
-                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $tech['color'] }}"></span>
+                                <span class="w-2 h-2 rounded-full"
+                                    style="background-color: {{ $tech['color'] }}"></span>
                             @endif
                             <span>{{ $tech['name'] }}</span>
                         </li>
@@ -53,7 +55,7 @@
 
             {{-- Database Section --}}
             <div
-                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background">
+                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background col-span-1 lg:col-span-2">
                 <h5 class="font-bold text-center">Database</h5>
                 <ul class="grid grid-flow-row grid-cols-2 gap-2.5">
                     @forelse($this->skillsSections['Database'] ?? [] as $tech)
@@ -64,7 +66,8 @@
                                     {!! sanitizeHtml($tech['icon'], 'strict') !!}
                                 </span>
                             @else
-                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $tech['color'] }}"></span>
+                                <span class="w-2 h-2 rounded-full"
+                                    style="background-color: {{ $tech['color'] }}"></span>
                             @endif
                             <span>{{ $tech['name'] }}</span>
                         </li>
@@ -76,7 +79,7 @@
 
             {{-- Tools & Cloud Section --}}
             <div
-                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background">
+                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background col-span-1 lg:col-span-2">
                 <h5 class="font-bold text-center">Tools & Cloud</h5>
                 <ul class="grid grid-flow-row grid-cols-2 gap-2.5">
                     @forelse($this->skillsSections['Tools & Cloud'] ?? [] as $tech)
@@ -100,7 +103,7 @@
 
             {{-- Concepts Section --}}
             <div
-                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background">
+                class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background col-span-1 lg:col-span-2">
                 <h5 class="font-bold text-center">Concepts</h5>
                 <ul class="grid grid-flow-row grid-cols-2 gap-2.5">
                     @forelse($this->skillsSections['Concepts'] ?? [] as $tech)
