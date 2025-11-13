@@ -97,8 +97,48 @@ class SkillsAndTechs extends Component
                 ->orderBy('name')
                 ->get();
 
-            // Raggruppa per categoria
-            return $technologies->groupBy('category')->toArray();
+            // Raggruppa per categoria normalizzata
+            $grouped = $technologies->groupBy(function ($tech) {
+                // Normalizza il nome della categoria per matchare il blade
+                if (!$tech->category) {
+                    return 'Other';
+                }
+
+                // Mappatura per categorie speciali
+                $categoryMapping = [
+                    'frontend' => 'Frontend',
+                    'backend' => 'Backend',
+                    'tools & cloud' => 'Tools & Cloud',
+                    'tools and cloud' => 'Tools & Cloud',
+                    'tools-cloud' => 'Tools & Cloud',
+                    'tools_cloud' => 'Tools & Cloud',
+                    'concepts' => 'Concepts',
+                    'concept' => 'Concepts',
+                ];
+
+                $lowerCategory = strtolower(trim($tech->category));
+
+                // Usa la mappatura se esiste, altrimenti capitalizza
+                return $categoryMapping[$lowerCategory] ?? ucwords($lowerCategory);
+            });
+
+            // Converti in array preservando le chiavi delle categorie
+            $result = [];
+            foreach ($grouped as $category => $techs) {
+                // Converti la collection di tecnologie in array
+                $result[$category] = $techs->map(function ($tech) {
+                    return [
+                        'id' => $tech->id,
+                        'name' => $tech->name,
+                        'category' => $tech->category,
+                        'icon' => $tech->icon,
+                        'color' => $tech->color,
+                        'projects_count' => $tech->projects_count ?? 0
+                    ];
+                })->toArray();
+            }
+
+            return $result;
         });
     }
 
