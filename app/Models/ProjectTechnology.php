@@ -70,6 +70,7 @@ class ProjectTechnology extends Model
         $cacheKeys = [
             self::CACHE_PREFIX . 'skills_technologies',
             self::CACHE_PREFIX . 'skills_stats',
+            self::CACHE_PREFIX . 'skills_sections',
             self::CACHE_PREFIX . 'admin_technologies_types',
             self::CACHE_PREFIX . 'technology_' . $this->id,
             self::CACHE_PREFIX . 'technologies_by_category_' . Str::slug($this->category),
@@ -189,6 +190,7 @@ class ProjectTechnology extends Model
         $patterns = [
             'skills_technologies',
             'skills_stats',
+            'skills_sections',
             'admin_technologies_types',
             'technology_*',
             'technologies_*'
