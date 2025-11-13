@@ -84,22 +84,18 @@ class SkillsAndTechs extends Component
     /**
      * Recupera le tecnologie raggruppate per sezioni
      */
-    #[Computed(cache: true)]
+    #[Computed]
     public function skillsSections()
     {
-        $cacheKey = self::CACHE_PREFIX . 'skills_sections';
+        $technologies = ProjectTechnology::query()
+            ->select(['id', 'name', 'category', 'icon', 'color'])
+            ->withCount('projects')
+            ->having('projects_count', '>', 0)
+            ->orderBy('name')
+            ->get();
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
-            $technologies = ProjectTechnology::query()
-                ->select(['id', 'name', 'category', 'icon', 'color'])
-                ->withCount('projects')
-                ->having('projects_count', '>', 0)
-                ->orderBy('name')
-                ->get();
-
-            // Raggruppa per categoria (mantieni come Collection)
-            return $technologies->groupBy('category');
-        });
+        // Raggruppa per categoria
+        return $technologies->groupBy('category');
     }
 
     /**
