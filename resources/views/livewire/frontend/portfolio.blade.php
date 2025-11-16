@@ -15,7 +15,7 @@
             {{-- Barra di ricerca --}}
             <div class="w-full lg:w-96">
                 <div class="relative">
-                    <input type="text" wire:model.debounce.300ms="search" placeholder="Search projects..."
+                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search projects..."
                         class="w-full max-w-[400px] rounded-md ring-0 border border-muted bg-background-contrast outline-none focus:ring-0 focus:outline-none focus:border-accent font-mono text-muted dark:text-background transition-colors ease-in-out duration-200">
                     @if ($search)
                         <button wire:click="$set('search', '')" class="absolute right-3 top-2.5 text-text">
@@ -31,7 +31,7 @@
             {{-- Filtri e ordinamento --}}
             <div class="flex flex-wrap gap-2 items-center">
                 {{-- Filtro categorie --}}
-                <select wire:model="categoryFilter"
+                <select wire:model.live="categoryFilter"
                     class="rounded-md ring-0 border border-muted bg-background-contrast outline-none focus:ring-0 focus:outline-none focus:border-accent font-mono text-muted dark:text-background transition-colors ease-in-out duration-200">
                     <option value="">All categories</option>
                     @if (isset($categories) && $categories)
@@ -44,7 +44,7 @@
                 </select>
 
                 {{-- Ordinamento --}}
-                <select wire:model="sortBy"
+                <select wire:model.live="sortBy"
                     class="rounded-md ring-0 border border-muted bg-background-contrast outline-none focus:ring-0 focus:outline-none focus:border-accent font-mono text-muted dark:text-background transition-colors ease-in-out duration-200">
                     <option value="created_at">Most recent</option>
                     <option value="title">Title</option>
