@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\CleanupContactMessages::class,
         \App\Console\Commands\FlushProjectCache::class,
+        Commands\TestEmailCommand::class,
     ];
 
     /**
