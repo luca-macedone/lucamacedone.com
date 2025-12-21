@@ -4,7 +4,8 @@
         <h2 class="text-4xl text-center">Skills & Technologies</h2>
         <p class="text-center max-w-[550px]">Here are the technologies and tools I work with to bring ideas to life.</p>
 
-        <div class="pt-5 grid grid-cols-1 lg:grid-cols-6 grid-flow-row grid-rows-2 gap-2.5 w-[550px] lg:w-full">
+        <div
+            class="pt-5 grid grid-cols-1 lg:grid-cols-6 grid-flow-row grid-rows-2 gap-2.5 max-w-[550px] min-w-full lg:w-full">
             {{-- Frontend Section --}}
             <div
                 class="w-full min-w-full h-full min-h-[250px] flex flex-col gap-3 p-2.5 border border-[#2a126e] dark:border-[#aa91ed] rounded-lg bg-background dark:bg-background col-span-1 lg:col-span-3">

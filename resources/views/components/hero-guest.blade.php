@@ -19,7 +19,7 @@
                     technologies. Passionate about clean
                     code,
                     great user experiences, and solving complex problems.</p>
-                <div class="flex flex-col lg:flex-row gap-2.5 pt-5">
+                <div class="w-full flex flex-col items-center lg:flex-row gap-3.5 pt-5">
                     @livewire('frontend.buttons.routing-button', [
                         'route' => 'home',
                         'label' => 'Get in Touch',
@@ -51,7 +51,8 @@
                 </ul>
             </div>
         </div>
-        <div class="absolute bottom-[100px] w-full flex justify-center animate-bounce text-primary p-5">
+        <div
+            class="absolute bottom-[-50px] lg:bottom-[100px] w-full flex justify-center animate-bounce text-primary p-5">
             <x-heroicon-o-chevron-down class="w-10 h-10" />
         </div>
     </section>

@@ -1,63 +1,40 @@
-<div class="w-full h-fit flex flex-row justify-center items-center border-t border-background-contrast pt-2.5">
+<div class="w-full h-fit flex flex-row justify-center items-center border-t border-background-contrast">
     <footer
-        class="bg-background dark:bg-background text-text dark:text-text h-fit w-full p-2 flex flex-col align-center justify-center max-w-[1000px]">
-        <nav
-            class="grid grid-cols-2 lg:grid-cols-3 gap-2.5 w-full justify-center items-start py-2.5 pb-5 border-b border-background-contrast">
-            <ul class="flex flex-col items-center lg:items-start gap-2 w-full">
-                <li class="w-full flex">
-                    <a class="border-s-4 border-background-contrast px-3 py-1 w-full hover:bg-background-contrast hover:rounded-md ease-in-out duration-200 cursor-pointer"
-                        href="{{ route('home') }}">Home</a>
-                </li>
-                <li class="w-full flex">
-                    <a class="border-s-4 border-background-contrast px-3 py-1 w-full hover:bg-background-contrast hover:rounded-md ease-in-out duration-200 cursor-pointer"
-                        href="#about-me">About</a>
-                </li>
-                <li class="w-full flex">
-                    <a class="border-s-4 border-background-contrast px-3 py-1 w-full hover:bg-background-contrast hover:rounded-md ease-in-out duration-200 cursor-pointer"
-                        href="#skills">Skills</a>
-                </li>
-            </ul>
-            <ul class="flex flex-col items-center lg:items-start gap-2 w-full">
-                <li class="w-full flex">
-                    <a class="border-s-4 border-background-contrast px-3 py-1 w-full hover:bg-background-contrast hover:rounded-md ease-in-out duration-200 cursor-pointer"
-                        href="#projects-preview">Projects</a>
-                </li>
-                <li class="w-full flex">
-                    <a class="border-s-4 border-background-contrast px-3 py-1 w-full hover:bg-background-contrast hover:rounded-md ease-in-out duration-200 cursor-pointer"
-                        href="#experiences">Experiences</a>
-                </li>
-                <li class="w-full flex">
-                    <a class="border-s-4 border-background-contrast px-3 py-1 w-full hover:bg-background-contrast hover:rounded-md ease-in-out duration-200 cursor-pointer"
-                        href="#contacts">Contacts</a>
-                </li>
-            </ul>
-            @guest
-                <div
-                    class="w-full flex gap-2 justify-center items-center lg:justify-end col-span-2 lg:col-span-1 mt-5 lg:mt-0">
+        class="bg-background dark:bg-background text-text dark:text-text h-fit w-full py-2 px-3.5 flex flex-col align-center justify-center max-w-[550px] lg:max-w-[1000px]">
+        <nav class="grid lg:grid-cols-4 grid-cols-1 w-full border-b border-background-contrast py-5 gap-3.5">
+            <div class="col-span-1 lg:col-span-3 grid grid-cols-1 lg:grid-cols-2 gap-2.5 max-w-[550px] lg:max-w-full">
+                <a class="bg-background-contrast px-3 py-1.5 rounded-lg border border-muted"
+                    href="{{ route('home') }}">Home</a>
+                <a class="bg-background-contrast px-3 py-1.5 rounded-lg border border-muted" href="#about-me">About</a>
+                <a class="bg-background-contrast px-3 py-1.5 rounded-lg border border-muted" href="#skills">Skills</a>
+                <a class="bg-background-contrast px-3 py-1.5 rounded-lg border border-muted"
+                    href="#projects-preview">Projects</a>
+                <a class="bg-background-contrast px-3 py-1.5 rounded-lg border border-muted"
+                    href="#experiences">Experiences</a>
+                <a class="bg-background-contrast px-3 py-1.5 rounded-lg border border-muted"
+                    href="#contacts">Contacts</a>
+            </div>
+            <div class="flex flex-col justify-start items-center lg:items-end gap-2.5">
+                @guest
                     <a href="{{ route('login') }}" class="p-2 rounded-md border border-muted text-muted">
                         Restricted Area
                     </a>
                     @livewire('frontend.theme-switcher')
-                </div>
-            @else
-                <div
-                    class="w-full flex gap-2 justify-center items-center lg:justify-end col-span-2 lg:col-span-1 mt-5 lg:mt-0">
+                @else
                     @livewire('frontend.theme-switcher')
-                    <div class="flex flex-col gap-2 items-center">
-                        <span class="">Ciao, {{ auth()->user()->name }}!</span>
-                        <a href="{{ route('dashboard') }}" class="p-2 rounded-md border border-muted text-muted">
-                            Dashboard
-                        </a>
-                    </div>
-                </div>
-            @endguest
+                    <span class="">Ciao, {{ auth()->user()->name }}!</span>
+                    <a href="{{ route('dashboard') }}" class="p-2 rounded-md border border-muted text-muted">
+                        Dashboard
+                    </a>
+                @endguest
+            </div>
         </nav>
         <div class="py-5">
             <div class="flex flex-col items-center">
                 <p>
                     © {{ date('Y') }} {{ config('app.name', 'Laravel') }}.
                 </p>
-                <p class="flex gap-2">
+                <p class="flex gap-1">
                     Built with
                     <span class="font-mono">
                         Livewire,

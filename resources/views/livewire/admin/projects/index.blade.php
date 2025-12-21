@@ -4,10 +4,19 @@
         <!-- Header Actions -->
         <div class="w-full flex justify-between">
             <div class="flex items-center gap-3.5">
-                <h2 class="font-bold text-2xl">Tutti i Progetti</h2>
-                <span class="px-3.5 py-1.5 text-sm rounded-full bg-secondary text-background-contrast dark:text-text">
-                    {{ $projects->total() }} totali
-                </span>
+                @livewire('frontend.buttons.routing-button', [
+                    'route' => 'dashboard',
+                    'label' => 'Back',
+                    'style' => 'accent',
+                    'navigate' => false,
+                    'anchor' => '',
+                ])
+                <div class="flex items-center gap-3.5">
+                    <h2 class="font-bold text-2xl">Tutti i Progetti</h2>
+                    <span class="px-3.5 py-1.5 text-sm rounded-full bg-primary text-background-contrast dark:text-text">
+                        {{ $projects->total() }} totali
+                    </span>
+                </div>
             </div>
             <div class="mt-4 sm:mt-0 flex space-x-3">
                 <a href="{{ route('admin.projects.create') }}"
