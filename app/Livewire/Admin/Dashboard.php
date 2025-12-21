@@ -24,7 +24,7 @@ class Dashboard extends Component
             ],
             'messages' => [
                 'total' => ContactMessage::count(),
-                'unread' => ContactMessage::where('read', false)->count(),
+                'unread' => ContactMessage::where('status', 'unread')->count(),
             ],
             'experiences' => WorkExperience::count(),
         ];
