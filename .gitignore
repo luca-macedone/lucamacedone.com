@@ -4,6 +4,7 @@
 .env.backup
 .env.production
 .env.development
+.env.local
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -23,3 +24,22 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Deploy configuration (contiene credenziali SSH)
+deploy.config
+
+# Build artifacts
+*.gz
+*.br
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Testing
+.phpunit.cache
+coverage/
