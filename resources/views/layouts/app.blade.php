@@ -32,8 +32,7 @@
     @livewireStyles
 </head>
 
-<body
-    class="font-sans antialiased bg-background dark:bg-background text-text dark:text-text {{ session()->has('theme') && session('theme') === 'dark' ? 'dark' : '' }}">
+<body class="font-sans antialiased bg-background text-text">
     <div class="relative">
         <x-guest-navbar />
 
@@ -51,12 +50,10 @@
     <script>
         // Funzione per applicare il tema
         function applyTheme(isDark) {
-            const body = document.body;
-
             if (isDark) {
-                body.classList.add('dark');
+                document.documentElement.classList.add('dark');
             } else {
-                body.classList.remove('dark');
+                document.documentElement.classList.remove('dark');
             }
         }
 

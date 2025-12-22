@@ -1,0 +1,19 @@
+###############################################################################
+# Configurazione Deploy Hostinger
+# Copia questo file in deploy.config e personalizza i parametri
+###############################################################################
+
+# Credenziali SSH Hostinger
+SSH_HOST=your-server.hostinger.com
+SSH_USER=u123456789
+SSH_PORT=65002
+
+# Path remoto dell'applicazione
+# Di solito: /home/u123456789/domains/tuodominio.com/public_html
+REMOTE_PATH=/home/u123456789/domains/lucamacedone.com/public_html
+
+# Branch Git da deployare
+GIT_BRANCH=main
+
+# Opzionale: Email per notifiche
+DEPLOY_NOTIFY_EMAIL=admin@lucamacedone.com
