@@ -142,6 +142,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/contacts/{id}', ContactMessages::class)->name('contacts.show');
 });
 
+Route::get('/privacy-policy', function () {
+    return view('pages.privacy-policy');
+})->name('privacy-policy');
+
 // /*
 // |--------------------------------------------------------------------------
 // | API ROUTES (se necessarie)
